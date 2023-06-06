@@ -1,0 +1,6 @@
+[flake8]
+ban-relative-imports = true
+max-line-length = 92
+extend-ignore =
+    E501,
+    W505

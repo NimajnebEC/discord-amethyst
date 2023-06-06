@@ -5,11 +5,17 @@ description = ""
 authors = ["NimajnebEC <nimajnebec@users.noreply.github.com>"]
 readme = "README.md"
 packages = [{ include = "amethyst", from = "src" }]
+license = "MIT Licence"
 
 [tool.poetry.dependencies]
-python = "^3.11"
 discord-py = "^2.2.3"
+pytest = "^7.3.1"
+python = "^3.11"
 
+
+[tool.poetry.group.dev.dependencies]
+flake8-length = "^0.3.1"
+flake8 = "^6.0.0"
 
 [build-system]
 requires = ["poetry-core"]
