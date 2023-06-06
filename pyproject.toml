@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "discord-amethyst"
+version = "0.1.0"
+description = ""
+authors = ["NimajnebEC <nimajnebec@users.noreply.github.com>"]
+readme = "README.md"
+packages = [{ include = "amethyst", from = "src" }]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+discord-py = "^2.2.3"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
