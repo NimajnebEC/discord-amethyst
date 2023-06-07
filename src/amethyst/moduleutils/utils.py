@@ -4,10 +4,16 @@ from typing import Iterator
 import importlib.util
 import importlib.abc
 import importlib
-import inspect
 import pkgutil
+import sys
 
-__all__ = ("get_caller_module", "iter_submodules")
+__all__ = (
+    "get_caller_module",
+    "iter_submodules",
+    "get_parent",
+    "is_package",
+    "get_module",
+)
 
 
 def get_caller_module() -> ModuleType:
@@ -17,13 +23,20 @@ def get_caller_module() -> ModuleType:
     -------
     ModuleType
         The first foreign module in the stack.
+
+    Raises
+    ------
+    ModuleUtilsError
+        Raised no foreign modules are found in the stack.
     """
-    stack = inspect.stack(0)
-    for frame in stack:
-        name = frame.frame.f_globals.get("__name__", "")
+    frame = sys._getframe(1)
+    while True:
+        name = frame.f_globals.get("__name__", "")
         if not name.startswith("amethyst."):
-            return importlib.import_module(name)
-    raise errors.ModuleUtilsError("No foreign modules in stack.")
+            return get_module(name)
+        frame = frame.f_back
+        if frame is None:
+            raise errors.ModuleUtilsError("No foreign modules in stack.")
 
 
 def iter_submodules(package: ModuleType) -> Iterator[ModuleType]:
@@ -41,11 +54,11 @@ def iter_submodules(package: ModuleType) -> Iterator[ModuleType]:
 
     Raises
     ------
-    errors.ExpectedPackage
+    ExpectedPackageError
         Raised when the provided module is not a package.
     """
-    if not hasattr(package, "__path__"):
-        raise errors.ExpectedPackage("Modules can not have submodules.")
+    if not is_package(package):
+        raise errors.ExpectedPackageError("Provided module is not a package.")
     for finder, name, _ in pkgutil.iter_modules(package.__path__, package.__name__ + "."):
         spec = None
         if isinstance(finder, importlib.abc.MetaPathFinder):
@@ -56,3 +69,60 @@ def iter_submodules(package: ModuleType) -> Iterator[ModuleType]:
         if spec is not None:
             package = importlib.util.module_from_spec(spec)
             yield package
+
+
+def is_package(module: ModuleType) -> bool:
+    """Checks if the given module is a package.
+
+    Parameters
+    ----------
+    module : ModuleType
+        The module to check.
+
+    Returns
+    -------
+    bool
+        True if the provided module is a package.
+    """
+    return hasattr(module, "__path__")
+
+
+def get_module(name: str) -> ModuleType:
+    """Gets a module from its name.
+
+    Parameters
+    ----------
+    name : str
+        The absolute name of the module.
+
+    Returns
+    -------
+    ModuleType
+        The imported module.
+    """
+    return importlib.import_module(name)
+
+
+def get_parent(module: ModuleType) -> ModuleType:
+    """Gets the parent package of the specified module.
+
+    Parameters
+    ----------
+    module : ModuleType
+        The module to get the parent of.
+
+    Returns
+    -------
+    ModuleType
+        The parent package of the specified module.
+
+    Raises
+    ------
+    NoParentError
+        Raised when the specified module has no parent.
+    """
+    try:
+        resolved = importlib.util.resolve_name("..", module.__name__)
+    except ImportError:
+        raise errors.NoParentError(f"{module.__name__} is a top level module.")
+    return get_module(resolved)
