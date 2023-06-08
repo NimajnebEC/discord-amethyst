@@ -87,20 +87,24 @@ def is_package(module: ModuleType) -> bool:
     return hasattr(module, "__path__")
 
 
-def get_module(name: str) -> ModuleType:
+def get_module(name: str, package: str | ModuleType | None = None) -> ModuleType:
     """Gets a module from its name.
 
     Parameters
     ----------
     name : str
         The absolute name of the module.
+    package : str | ModuleType | None
+        If present, will perform a relative import from the specified package.
 
     Returns
     -------
     ModuleType
         The imported module.
     """
-    return importlib.import_module(name)
+    if isinstance(package, ModuleType):
+        package = package.__name__
+    return importlib.import_module(name, package)
 
 
 def get_parent(module: ModuleType) -> ModuleType:

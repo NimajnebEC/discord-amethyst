@@ -1,4 +1,8 @@
-from amethyst.moduleutils.errors import ModuleUtilsError, ExpectedPackageError
+from amethyst.moduleutils.errors import (
+    ModuleUtilsError,
+    ExpectedPackageError,
+    NoParentError,
+)
 from amethyst.moduleutils.utils import (
     get_caller_module,
     iter_submodules,
@@ -16,4 +20,5 @@ __all__ = (
     "get_module",
     "ModuleUtilsError",
     "ExpectedPackageError",
+    "NoParentError",
 )
