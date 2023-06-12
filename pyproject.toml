@@ -9,13 +9,14 @@ license = "MIT Licence"
 
 [tool.poetry.dependencies]
 discord-py = "^2.2.3"
-pytest = "^7.3.1"
+dynamicpy = "^1.0.1"
 python = "^3.11"
 
 
 [tool.poetry.group.dev.dependencies]
 flake8-length = "^0.3.1"
 flake8 = "^6.0.0"
+pytest = "^7.3.1"
 
 [build-system]
 requires = ["poetry-core"]

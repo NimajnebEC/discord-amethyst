@@ -267,6 +267,20 @@ test = ["coverage[toml]", "pytest", "pytest-asyncio", "pytest-cov", "pytest-mock
 voice = ["PyNaCl (>=1.3.0,<1.6)"]
 
 [[package]]
+name = "dynamicpy"
+version = "1.0.1"
+description = "A python module for dynamically interacting with objects to improve expandability."
+optional = false
+python-versions = ">=3.8.1,<4.0.0"
+files = [
+    {file = "dynamicpy-1.0.1-py3-none-any.whl", hash = "sha256:25bf5894671e96d13ce670204c274d9119aa42bd85aa82e4f617fd50cc8c83d9"},
+    {file = "dynamicpy-1.0.1.tar.gz", hash = "sha256:451d9eba31c5c73b1d4b95bc96911e2cf3d46ca29a41c6c0929f1e87df7c04c8"},
+]
+
+[package.dependencies]
+typeguard = ">=4.0.0,<5.0.0"
+
+[[package]]
 name = "flake8"
 version = "6.0.0"
 description = "the modular source code checker: pep8 pyflakes and co"
@@ -567,6 +581,21 @@ pluggy = ">=0.12,<2.0"
 testing = ["argcomplete", "attrs (>=19.2.0)", "hypothesis (>=3.56)", "mock", "nose", "pygments (>=2.7.2)", "requests", "xmlschema"]
 
 [[package]]
+name = "typeguard"
+version = "4.0.0"
+description = "Run-time type checker for Python"
+optional = false
+python-versions = ">=3.7.4"
+files = [
+    {file = "typeguard-4.0.0-py3-none-any.whl", hash = "sha256:c4a40af0ba8a41077221271b46d0a6d8d46045443e4d887887c69254ca861952"},
+    {file = "typeguard-4.0.0.tar.gz", hash = "sha256:194fb3dbcb06ea9caf7088f3befee014de57961689f9c859ac5239b1ef61d987"},
+]
+
+[package.extras]
+doc = ["packaging", "sphinx-autodoc-typehints (>=1.2.0)", "sphinx-rtd-theme"]
+test = ["mypy (>=1.2.0)", "pytest (>=7)"]
+
+[[package]]
 name = "yarl"
 version = "1.9.2"
 description = "Yet another URL library"
@@ -656,4 +685,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "62ba340fb547d4cbcadf1a768b740e76ea810ba68ca99e69df4af4caccd6e1a7"
+content-hash = "88ab7b62bee905065ca7e3cc8ddc7cf4a040e9c2dd8817778efa41e79cfe355b"
