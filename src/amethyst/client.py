@@ -1,3 +1,4 @@
+from discord import app_commands
 from amethyst import errors
 from typing import Any
 import dynamicpy
@@ -20,6 +21,8 @@ class AmethystClient(discord.Client):
         **options: Any,
     ) -> None:
         self._home_package = self._get_home_package()
+        self._tree = app_commands.CommandTree(self)
+
         self._load_modules(search_modules or _default_modules)
 
         super().__init__(intents=intents, **options)
@@ -29,9 +32,13 @@ class AmethystClient(discord.Client):
         """The parent package of the module where this client was instantiated. Is `None` if it was a top-level module."""
         return self._home_package
 
+    @property
+    def tree(self) -> app_commands.CommandTree:
+        """The command tree responsible for handling the application commands in this bot."""
+        return self._tree
+
     def _load_modules(self, search_modules: list[str]) -> None:
         loader = dynamicpy.DynamicLoader()
-        loader.register_handler(lambda n, v: print(n))
 
         for module in search_modules:
             if self.home_package is None and module.startswith("."):
