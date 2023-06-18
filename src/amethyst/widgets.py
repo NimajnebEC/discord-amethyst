@@ -1,8 +1,9 @@
-from discord.app_commands.commands import P, T, CommandCallback, GroupT
-from discord.app_commands import describe, locale_str
-from typing import Callable, Generic
-from discord import app_commands
 from abc import ABC
+from typing import Callable, Generic
+
+from discord import app_commands
+from discord.app_commands import describe, locale_str
+from discord.app_commands.commands import CommandCallback, GroupT, P, T
 
 __all__ = ("AmethystPlugin", "AmethystCommand", "command", "describe")
 

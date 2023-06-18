@@ -1,9 +1,11 @@
-from discord import app_commands
-from amethyst import errors
-from typing import Any
-import dynamicpy
-import discord
 import logging
+from typing import Any
+
+import discord
+import dynamicpy
+from discord import app_commands
+
+from amethyst import errors
 
 __all__ = ("AmethystClient",)
 
