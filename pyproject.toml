@@ -9,7 +9,7 @@ license = "MIT Licence"
 
 [tool.poetry.dependencies]
 discord-py = "^2.3.0"
-dynamicpy = "^1.0.1"
+dynamicpy = {git = "https://github.com/NimajnebEC/dynamicpy.git"}
 python = "^3.11"
 
 

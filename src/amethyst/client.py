@@ -20,12 +20,11 @@ class AmethystClient(discord.Client):
         search_modules: list[str] | None = None,
         **options: Any,
     ) -> None:
+        super().__init__(intents=intents, **options)
         self._home_package = self._get_home_package()
         self._tree = app_commands.CommandTree(self)
 
         self._load_modules(search_modules or _default_modules)
-
-        super().__init__(intents=intents, **options)
 
     @property
     def home_package(self) -> str | None:

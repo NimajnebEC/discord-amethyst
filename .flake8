@@ -2,5 +2,6 @@
 ban-relative-imports = true
 max-line-length = 92
 extend-ignore =
+    LN002,
     E501,
     W505

@@ -271,14 +271,18 @@ name = "dynamicpy"
 version = "1.0.1"
 description = "A python module for dynamically interacting with objects to improve expandability."
 optional = false
-python-versions = ">=3.8.1,<4.0.0"
-files = [
-    {file = "dynamicpy-1.0.1-py3-none-any.whl", hash = "sha256:25bf5894671e96d13ce670204c274d9119aa42bd85aa82e4f617fd50cc8c83d9"},
-    {file = "dynamicpy-1.0.1.tar.gz", hash = "sha256:451d9eba31c5c73b1d4b95bc96911e2cf3d46ca29a41c6c0929f1e87df7c04c8"},
-]
+python-versions = "^3.8.1"
+files = []
+develop = false
 
 [package.dependencies]
-typeguard = ">=4.0.0,<5.0.0"
+typeguard = "^4.0.0"
+
+[package.source]
+type = "git"
+url = "https://github.com/NimajnebEC/dynamicpy.git"
+reference = "HEAD"
+resolved_reference = "03ae7167d2c9ab9ba9c5d32d8d0a78f1244ee56b"
 
 [[package]]
 name = "flake8"
@@ -685,4 +689,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "c8fc173918aeb6e42da7ac681395223cbf431c9d52e63de86b14cfb507c845ac"
+content-hash = "33d1cf7c82182a639eb34179c5d65c5d9dc3044f510a72df40975a3e0c4a01c9"
