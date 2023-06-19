@@ -1,4 +1,4 @@
 from amethyst.client import AmethystClient
-from amethyst.widgets import AmethystPlugin, command, describe
+from amethyst.widget import command, describe
 
-__all__ = ("AmethystClient", "AmethystPlugin", "command", "describe")
+__all__ = ("AmethystClient", "command", "describe")
