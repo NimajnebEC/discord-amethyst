@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Self
+from typing import Any, Self, Type
 
 import discord
 import dynamicpy
@@ -8,7 +8,7 @@ from discord.abc import Snowflake
 
 from amethyst import errors
 from amethyst.utils import is_dict_subset
-from amethyst.widget import AmethystCommand
+from amethyst.widget import AmethystCommand, AmethystPlugin
 
 __all__ = ("AmethystClient",)
 
@@ -53,6 +53,10 @@ class AmethystClient(discord.Client):
         _log.debug("Registering command '%s'", command.name)
         self._tree.add_command(command)
 
+    def register_plugin(self, plugin: Type[AmethystPlugin]) -> None:
+        _log.debug("Registering plugin '%s'", plugin.__name__)
+        self._loader.load_object(plugin())
+
     async def commands_in_sync(self, guild: Snowflake | None = None) -> bool:
         """Checks if the the commands locally registered to this client are in sync with the commands on discord.
 
@@ -89,6 +93,12 @@ class AmethystClient(discord.Client):
         loader = dynamicpy.DynamicLoader()
 
         loader.register_type_handler(lambda _, v: self.register_command(v), AmethystCommand)
+        loader.register_handler(
+            lambda _, v: self.register_plugin(v),
+            lambda _, v: isinstance(v, type)
+            and v is not AmethystPlugin
+            and issubclass(v, AmethystPlugin),
+        )
 
         return loader
 

@@ -279,10 +279,8 @@ develop = false
 typeguard = "^4.0.0"
 
 [package.source]
-type = "git"
-url = "https://github.com/NimajnebEC/dynamicpy.git"
-reference = "HEAD"
-resolved_reference = "03ae7167d2c9ab9ba9c5d32d8d0a78f1244ee56b"
+type = "directory"
+url = "../dynamicpy"
 
 [[package]]
 name = "flake8"
@@ -706,4 +704,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "0148606393fb3d00dc336446799ea541cf3369a2192b33c53c86bc564f290438"
+content-hash = "37d648f90ba3c7c8eabebcb12ba73917934c5a6212147a68bdc6fd935e8a0415"
