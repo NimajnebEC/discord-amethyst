@@ -6,8 +6,8 @@ import dynamicpy
 from discord import app_commands
 from discord.abc import Snowflake
 
-from amethyst import errors
-from amethyst.utils import is_dict_subset
+from amethyst import error
+from amethyst.util import is_dict_subset
 from amethyst.widget import AmethystCommand, AmethystPlugin
 
 __all__ = ("AmethystClient",)
@@ -126,4 +126,4 @@ class AmethystClient(discord.Client):
             return None
         except ImportError as e:
             _log.error("Error locating home package: %s", e)
-            raise errors.ModuleLocateError("Error locating home package") from e
+            raise error.ModuleLocateError("Error locating home package") from e
