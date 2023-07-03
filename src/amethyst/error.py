@@ -7,3 +7,7 @@ class AmethystError(Exception):
 
 class ModuleLocateError(AmethystError):
     """Exception raised when there is an error locating a module."""
+
+
+class RegisterPluginError(AmethystError):
+    """Exception raised when there is an error registering a plugin."""

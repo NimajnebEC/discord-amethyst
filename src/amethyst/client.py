@@ -26,11 +26,11 @@ class AmethystClient(discord.Client):
         **options: Any,
     ) -> None:
         super().__init__(intents=intents, **options)
+        self._search_modules = search_modules or _default_modules
         self._home_package: str | None = self._get_home_package()
-        self._tree: app_commands.CommandTree[Self] = app_commands.CommandTree(self)
         self._loader: dynamicpy.DynamicLoader = self._build_loader()
-
-        self._load_modules(search_modules or _default_modules)
+        self._tree: app_commands.CommandTree[Self] = app_commands.CommandTree(self)
+        self._dependencies: dynamicpy.DependencyLibrary = dynamicpy.DependencyLibrary()
 
     @property
     def home_package(self) -> str | None:
@@ -54,8 +54,25 @@ class AmethystClient(discord.Client):
         self._tree.add_command(command)
 
     def register_plugin(self, plugin: Type[AmethystPlugin]) -> None:
+        """Register an `AmethystPlugin` to the client.
+
+        Parameters
+        ----------
+        plugin : Type[AmethystPlugin]
+            A type inheriting from `AmethystPlugin` to register to the client.
+        """
         _log.debug("Registering plugin '%s'", plugin.__name__)
-        self._loader.load_object(plugin())
+
+        try:
+            instance = plugin.__new__(plugin)
+            instance._client = self  # add client attribute
+            self._dependencies.inject(instance.__init__)
+        except dynamicpy.InjectDependenciesError as e:
+            raise error.RegisterPluginError(
+                f"Error injecting dependencies into {plugin.__name__}"
+            ) from e
+
+        self._loader.load_object(instance)
 
     async def commands_in_sync(self, guild: Snowflake | None = None) -> bool:
         """Checks if the the commands locally registered to this client are in sync with the commands on discord.
@@ -88,8 +105,35 @@ class AmethystClient(discord.Client):
         # Check for changes to existing commands
         return is_dict_subset(remote, local)
 
+    def load(self, search_modules: list[str] | None = None) -> None:
+        """Recursively search the specified modules and register all widgets found.
+
+        Parameters
+        ----------
+        search_modules : list[str], optional
+            The modules to search through, will use the modules specified in the constructor by default
+        """
+        self._load_modules(search_modules or self._search_modules)
+
+    async def start(self, token: str, *, reconnect: bool = True) -> None:
+        """A Shorthand coroutine for `load` + `login` + `connect`.
+
+        Parameters
+        ----------
+        token: str
+            The authentication token. Do not prefix this token with
+            anything as the library will do it for you.
+        reconnect: bool
+            If we should attempt reconnecting, either due to internet
+            failure or a specific failure on Discord's part. Certain
+            disconnects that lead to bad state will not be handled (such as
+            invalid sharding payloads or bad tokens).
+        """
+        self.load()
+        await super().start(token, reconnect=reconnect)
+
     def _build_loader(self) -> dynamicpy.DynamicLoader:
-        """Builds a DynamicLoader for registering widgets to the client."""
+        """Builds a DynamicLoader for finding widgets to add to the client."""
         loader = dynamicpy.DynamicLoader()
 
         loader.register_type_handler(lambda _, v: self.register_command(v), AmethystCommand)
@@ -104,6 +148,7 @@ class AmethystClient(discord.Client):
 
     def _load_modules(self, search_modules: list[str]) -> None:
         """Loads the modules specified in `search_modules` using the client's DynamicLoader."""
+        _log.debug("Loading modules %s", search_modules)
         for module in search_modules:
             if self.home_package is None and module.startswith("."):
                 module = module[1:]

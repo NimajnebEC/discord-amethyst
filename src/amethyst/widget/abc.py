@@ -1,8 +1,21 @@
 from abc import ABC
 from copy import copy as shallowcopy
-from typing import Any, Callable, Concatenate, Generic, ParamSpec, Self, TypeVar, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Concatenate,
+    Generic,
+    ParamSpec,
+    Self,
+    TypeVar,
+    Union,
+)
 
 from dynamicpy import DynamicLoader
+
+if TYPE_CHECKING:
+    from amethyst.client import AmethystClient
 
 __all__ = ("AmethystPlugin", "CallbackWidget")
 
@@ -13,12 +26,18 @@ Callback = Union[Callable[Concatenate[PluginT, P], T], Callable[P, T]]
 
 
 class AmethystPlugin(ABC):
-    """The base class for all Amethyst plugins to inherit from"""
+    """The base class for all Amethyst plugins to inherit from."""
 
-    def __new__(cls) -> Self:
-        self = super().__new__(cls)
+    def __init__(self) -> None:
+        self._client: AmethystClient
 
-        # Bind all CallbackWidgets to self
+    def __new__(cls, *args, **kwargs) -> Self:
+        instance = super().__new__(cls)
+        instance._bind_widgets()
+        return instance
+
+    def _bind_widgets(self):
+        """Bind all `CallbackWidgets` to self."""
         loader = DynamicLoader()
         loader.register_type_handler(
             lambda n, v: setattr(self, n, v._bound_copy(self)),
@@ -28,6 +47,15 @@ class AmethystPlugin(ABC):
         loader.load_object(self)
 
         return self
+
+    @property
+    def client(self) -> "AmethystClient":
+        """The instance of `AmethystClient` that this plugin is registered to."""
+        if not hasattr(self, "_client"):
+            raise AttributeError(
+                "Plugin has no attribute 'client' as it was not instantiated by an AmethystClient"
+            )
+        return self._client
 
 
 class CallbackWidget(ABC, Generic[PluginT, P, T]):
