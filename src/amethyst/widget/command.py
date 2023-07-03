@@ -15,7 +15,7 @@ from discord.app_commands import Command, describe, locale_str
 from discord.app_commands.commands import Group
 from discord.utils import MISSING, _shorten
 
-from amethyst.widget.plugin import AmethystPlugin, BindableWidget
+from amethyst.widget.abc import AmethystPlugin, CallbackWidget
 
 __all__ = ("AmethystCommand", "command", "describe")
 
@@ -30,7 +30,7 @@ CommandCallback = Union[
 ]
 
 
-class AmethystCommand(Command[PluginT, P, T], BindableWidget):  # type: ignore
+class AmethystCommand(Command[PluginT, P, T], CallbackWidget):  # type: ignore
     """Represents an Amethyst command.
 
     These are usually not created manually, instead they are created using the `amethyst.command` decorator.
