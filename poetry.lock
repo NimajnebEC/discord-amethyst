@@ -282,7 +282,7 @@ typeguard = "^4.0.0"
 type = "git"
 url = "https://github.com/NimajnebEC/dynamicpy.git"
 reference = "HEAD"
-resolved_reference = "0e2381b20e79f43943f226a3bb6a7524b1894130"
+resolved_reference = "18488e9e55c4f35fa8cc11754434076ed356c424"
 
 [[package]]
 name = "flake8"

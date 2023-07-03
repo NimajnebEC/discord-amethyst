@@ -42,6 +42,25 @@ class AmethystClient(discord.Client):
         """The command tree responsible for handling the application commands in this bot."""
         return self._tree
 
+    def add_dependency(self, dependency: Any) -> None:
+        """Add a dependency to the client's dependency library.
+
+        These dependencies are injected into plugin constructors.
+
+        Parameters
+        ----------
+        dependency : Any
+            The dependency to add the library.
+
+        Raises
+        ------
+        TypeError
+            Raised when attempting to add a type to the library.
+        DuplicateDependencyError
+            Raised when another dependency with that type already exists in the library.
+        """
+        self._dependencies.add(dependency)
+
     def register_command(self, command: AmethystCommand) -> None:
         """Register an instance of `AmethystCommand` to the client.
 
@@ -67,9 +86,13 @@ class AmethystClient(discord.Client):
             instance = plugin.__new__(plugin)
             instance._client = self  # add client attribute
             self._dependencies.inject(instance.__init__)
+        except dynamicpy.DependencyNotFoundError as e:
+            raise error.RegisterPluginError(
+                f"Could not find a dependency when injecting into '{plugin.__name__}'"
+            ) from e
         except dynamicpy.InjectDependenciesError as e:
             raise error.RegisterPluginError(
-                f"Error injecting dependencies into {plugin.__name__}"
+                f"Error injecting dependencies into '{plugin.__name__}'"
             ) from e
 
         self._loader.load_object(instance)
