@@ -1,12 +1,21 @@
 import inspect
-from typing import Any, Callable, Concatenate, Coroutine, ParamSpec, TypeVar, Union
+from typing import (
+    Any,
+    Callable,
+    Concatenate,
+    Coroutine,
+    ParamSpec,
+    Self,
+    TypeVar,
+    Union,
+)
 
 from discord import Interaction
 from discord.app_commands import Command, describe, locale_str
 from discord.app_commands.commands import Group
 from discord.utils import MISSING, _shorten
 
-from amethyst.widget.plugin import AmethystPlugin
+from amethyst.widget.plugin import AmethystPlugin, BindableWidget
 
 __all__ = ("AmethystCommand", "command", "describe")
 
@@ -21,7 +30,7 @@ CommandCallback = Union[
 ]
 
 
-class AmethystCommand(Command[PluginT, P, T]):  # type: ignore
+class AmethystCommand(Command[PluginT, P, T], BindableWidget):  # type: ignore
     """Represents an Amethyst command.
 
     These are usually not created manually, instead they are created using the `amethyst.command` decorator.
@@ -51,6 +60,9 @@ class AmethystCommand(Command[PluginT, P, T]):  # type: ignore
             auto_locale_strings=auto_locale_strings,
             extras=extras,
         )
+
+    def _bound_copy(self, binding: AmethystPlugin) -> Self:
+        return self._copy_with(parent=self.parent, binding=binding)  # type: ignore
 
 
 def command(
