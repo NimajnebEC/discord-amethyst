@@ -20,8 +20,8 @@ from amethyst.widget.abc import AmethystPlugin, CallbackWidget
 __all__ = ("AmethystCommand", "command", "describe")
 
 PluginT = TypeVar("PluginT", bound=AmethystPlugin)
-T = TypeVar("T")
 P = ParamSpec("P")
+T = TypeVar("T")
 
 Coro = Coroutine[Any, Any, T]
 CommandCallback = Union[
@@ -30,7 +30,10 @@ CommandCallback = Union[
 ]
 
 
-class AmethystCommand(Command[PluginT, P, T], CallbackWidget):  # type: ignore
+class AmethystCommand(
+    Command[PluginT, P, T],  # type: ignore
+    CallbackWidget[PluginT, Concatenate[Interaction[Any], P], Coro[T]],
+):
     """Represents an Amethyst command.
 
     These are usually not created manually, instead they are created using the `amethyst.command` decorator.
@@ -50,7 +53,9 @@ class AmethystCommand(Command[PluginT, P, T], CallbackWidget):  # type: ignore
         extras: dict[Any, Any] = MISSING
     ):
         self._hybrid: bool = hybrid
-        super().__init__(
+        CallbackWidget.__init__(self, callback)  # type: ignore
+        Command.__init__(
+            self,
             name=name,
             description=description,
             callback=callback,
