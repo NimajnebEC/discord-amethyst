@@ -17,7 +17,7 @@ from dynamicpy import DynamicLoader
 if TYPE_CHECKING:
     from amethyst.client import AmethystClient
 
-__all__ = ("AmethystPlugin", "CallbackWidget")
+__all__ = ("AmethystPlugin", "CallbackWidget", "Callback")
 
 T = TypeVar("T")
 P = ParamSpec("P")

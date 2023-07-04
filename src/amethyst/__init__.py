@@ -1,4 +1,19 @@
 from amethyst.client import AmethystClient
-from amethyst.widget import AmethystPlugin, command, describe
+from amethyst.widget import (
+    AmethystEvent,
+    AmethystPlugin,
+    command,
+    describe,
+    event,
+    events,
+)
 
-__all__ = ("AmethystClient", "command", "describe", "AmethystPlugin")
+__all__ = (
+    "AmethystClient",
+    "command",
+    "describe",
+    "AmethystEvent",
+    "AmethystPlugin",
+    "event",
+    "events",
+)
