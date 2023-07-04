@@ -1,21 +1,12 @@
 import inspect
-from typing import (
-    Any,
-    Callable,
-    Concatenate,
-    Coroutine,
-    ParamSpec,
-    Self,
-    TypeVar,
-    Union,
-)
+from typing import Any, Callable, Concatenate, Coroutine, ParamSpec, Self, TypeVar
 
 from discord import Interaction
 from discord.app_commands import Command, describe, locale_str
 from discord.app_commands.commands import Group
 from discord.utils import MISSING, _shorten
 
-from amethyst.widget.abc import AmethystPlugin, CallbackWidget
+from amethyst.widget.abc import AmethystPlugin, Callback, CallbackWidget
 
 __all__ = ("AmethystCommand", "command", "describe")
 
@@ -24,15 +15,12 @@ P = ParamSpec("P")
 T = TypeVar("T")
 
 Coro = Coroutine[Any, Any, T]
-CommandCallback = Union[
-    Callable[Concatenate[PluginT, Interaction[Any], P], Coro[T]],
-    Callable[Concatenate[Interaction[Any], P], Coro[T]],
-]
+CommandCallback = Callback[PluginT, Concatenate[Interaction[Any], P], Coro[T]]
 
 
 class AmethystCommand(
     Command[PluginT, P, T],  # type: ignore
-    CallbackWidget[PluginT, Concatenate[Interaction[Any], P], Coro[T]],
+    CallbackWidget,
 ):
     """Represents an Amethyst command.
 
@@ -53,7 +41,6 @@ class AmethystCommand(
         extras: dict[Any, Any] = MISSING
     ):
         self._hybrid: bool = hybrid
-        CallbackWidget.__init__(self, callback)  # type: ignore
         Command.__init__(
             self,
             name=name,
@@ -76,7 +63,7 @@ def command(
     hybrid: bool = False,
     nsfw: bool = False,
 ) -> Callable[[CommandCallback[PluginT, P, T]], AmethystCommand[PluginT, P, T]]:
-    """Creates an `AmethystCommand` from a regular function.
+    """Decorator to creates an `AmethystCommand` from a regular function.
 
     Parameters
     ------------
