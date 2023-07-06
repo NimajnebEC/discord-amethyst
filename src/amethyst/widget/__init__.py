@@ -1,6 +1,12 @@
 from amethyst.widget.abc import AmethystPlugin
 from amethyst.widget.command import AmethystCommand, command, describe
-from amethyst.widget.event import AmethystEvent, AmethystEventHandler, event, events
+from amethyst.widget.event import (
+    AmethystEvent,
+    AmethystEventHandler,
+    DiscordPyEvent,
+    event,
+    events,
+)
 
 __all__ = (
     "AmethystCommand",
@@ -9,6 +15,7 @@ __all__ = (
     "AmethystPlugin",
     "AmethystEvent",
     "AmethystEventHandler",
+    "DiscordPyEvent",
     "event",
     "events",
 )

@@ -1,5 +1,6 @@
+import asyncio
 import logging
-from typing import Any, Self, Type
+from typing import Any, Coroutine, ParamSpec, Self, Type, TypeVar
 
 import discord
 import dynamicpy
@@ -8,13 +9,22 @@ from discord.abc import Snowflake
 
 from amethyst import error
 from amethyst.util import is_dict_subset
-from amethyst.widget import AmethystCommand, AmethystPlugin
+from amethyst.widget import (
+    AmethystCommand,
+    AmethystEvent,
+    AmethystEventHandler,
+    AmethystPlugin,
+    DiscordPyEvent,
+)
 
 __all__ = ("AmethystClient",)
 
 _default_modules = [".commands"]
 
 _log = logging.getLogger(__name__)
+
+NoneT = TypeVar("NoneT", None, Coroutine[Any, Any, None])
+P = ParamSpec("P")
 
 
 class AmethystClient(discord.Client):
@@ -31,6 +41,7 @@ class AmethystClient(discord.Client):
         self._loader: dynamicpy.DynamicLoader = self._build_loader()
         self._tree: app_commands.CommandTree[Self] = app_commands.CommandTree(self)
         self._dependencies: dynamicpy.DependencyLibrary = dynamicpy.DependencyLibrary()
+        self._events: dict[AmethystEvent, list[AmethystEventHandler]] = {}
 
     @property
     def home_package(self) -> str | None:
@@ -97,6 +108,54 @@ class AmethystClient(discord.Client):
 
         self._loader.load_object(instance)
 
+    def register_event(self, handler: AmethystEventHandler) -> None:
+        """Register an `AmethystEventHandler` to the client.
+
+        Parameters
+        ----------
+        event : AmethystEvent
+            The instance `AmethystEventHandler` to register to the client.
+        """
+        event = handler.event
+        _log.debug(
+            "Registering handler '%s' for event '%s'",
+            handler.callback.__name__,
+            event.name,
+        )
+
+        if event not in self._events:
+            self._events[event] = []
+
+            # Setup invoker for default events
+            if isinstance(handler.event, DiscordPyEvent) and not hasattr(self, event.name):
+                setattr(
+                    self,
+                    event.name,
+                    lambda *args, **kwargs: self.invoke_event(event, *args, **kwargs),
+                )
+
+        # Add handler to event map
+        self._events[event].append(handler)
+
+    def invoke_event(self, event: AmethystEvent[P, NoneT], *args, **kwargs) -> NoneT:  # type: ignore
+        """Invokes all the registered handlers of the specified event.
+
+        Parameters
+        ----------
+        event : AmethystEvent
+            The event to invoke the handlers of.
+
+        Returns
+        -------
+        Coroutine | None
+            When the event is a coroutine, a `Coroutine` will be returned. Otherwise `None`.
+        """
+        handlers = self._events.get(event, [])
+        if event.is_coroutine:
+            return asyncio.gather(*(h.invoke(*args, **kwargs) for h in handlers))  # type: ignore
+        for handler in handlers:
+            handler.invoke(*args, **kwargs)
+
     async def commands_in_sync(self, guild: Snowflake | None = None) -> bool:
         """Checks if the the commands locally registered to this client are in sync with the commands on discord.
 
@@ -160,6 +219,9 @@ class AmethystClient(discord.Client):
         loader = dynamicpy.DynamicLoader()
 
         loader.register_type_handler(lambda _, v: self.register_command(v), AmethystCommand)
+        loader.register_type_handler(
+            lambda _, v: self.register_event(v), AmethystEventHandler
+        )
         loader.register_handler(
             lambda _, v: self.register_plugin(v),
             lambda _, v: isinstance(v, type)

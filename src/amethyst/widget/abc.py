@@ -70,6 +70,18 @@ class CallbackWidget(ABC, Generic[PluginT, P, T]):
         copy._binding = binding
         return copy
 
+    def invoke(self, *args, **kwargs) -> T:
+        """Invokes the callback with the provided parameters and returns its result.
+
+        Returns
+        -------
+        T
+            The returned result from the callback function.
+        """
+        if self._binding is not None:
+            return self._callback(self._binding, *args, **kwargs)  # type: ignore
+        return self._callback(*args, **kwargs)  # type: ignore
+
     @property
     def callback(self) -> Callback[PluginT, P, T]:
         """The callback function of this widget."""
