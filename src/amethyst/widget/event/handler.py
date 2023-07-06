@@ -6,11 +6,10 @@ from typing import Any, Callable, Coroutine, Generic, ParamSpec, TypeVar
 from amethyst.widget.abc import AmethystPlugin, Callback, CallbackWidget
 
 PluginT = TypeVar("PluginT", bound=AmethystPlugin)
-NoneT = TypeVar("NoneT", None, "Coro[None]")
+NoneT = TypeVar("NoneT", bound=None | Coroutine[Any, Any, None])
 P = ParamSpec("P")
 T = TypeVar("T")
 
-Coro = Coroutine[Any, Any, T]
 HandlerCallback = Callback[PluginT, P, NoneT]
 
 __all__ = ("AmethystEvent", "DiscordPyEvent", "AmethystEventHandler", "event")
@@ -23,7 +22,7 @@ class AmethystEvent(Generic[P, NoneT]):
 
     Example:
     ```
-    on_message: AmethystEvent[discord.Message, Coroutine[Any, Any, None]] = AmethystEvent("on_message")
+    on_message: AmethystEvent[[discord.Message], Coroutine] = AmethystEvent("on_message")
     ```
     """
 
@@ -42,7 +41,7 @@ class AmethystEvent(Generic[P, NoneT]):
         return self._is_coroutine
 
 
-class DiscordPyEvent(AmethystEvent[P, Coro[None]]):
+class DiscordPyEvent(AmethystEvent[P, Coroutine]):
     """Represents a normal Discord.py event and its parameters."""
 
     def __init__(self, name: str) -> None:

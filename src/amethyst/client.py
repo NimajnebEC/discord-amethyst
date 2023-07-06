@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import Any, Coroutine, ParamSpec, Self, Type, TypeVar
+from typing import Any, Coroutine, Self, Type, overload
 
 import discord
 import dynamicpy
@@ -22,9 +22,6 @@ __all__ = ("AmethystClient",)
 _default_modules = [".commands"]
 
 _log = logging.getLogger(__name__)
-
-NoneT = TypeVar("NoneT", None, Coroutine[Any, Any, None])
-P = ParamSpec("P")
 
 
 class AmethystClient(discord.Client):
@@ -137,7 +134,17 @@ class AmethystClient(discord.Client):
         # Add handler to event map
         self._events[event].append(handler)
 
-    def invoke_event(self, event: AmethystEvent[P, NoneT], *args, **kwargs) -> NoneT:  # type: ignore
+    @overload
+    def invoke_event(
+        self, event: AmethystEvent[Any, Coroutine], *args, **kwargs
+    ) -> Coroutine[Any, Any, None]:
+        ...
+
+    @overload
+    def invoke_event(self, event: AmethystEvent[Any, None], *args, **kwargs) -> None:
+        ...
+
+    def invoke_event(self, event: AmethystEvent, *args, **kwargs) -> Coroutine | None:
         """Invokes all the registered handlers of the specified event.
 
         Parameters
