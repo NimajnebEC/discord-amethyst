@@ -15,6 +15,7 @@ from amethyst.widget import (
     AmethystEventHandler,
     AmethystPlugin,
     DiscordPyEvent,
+    events,
 )
 
 __all__ = ("AmethystClient",)
@@ -220,6 +221,20 @@ class AmethystClient(discord.Client):
         """
         self.load()
         await super().start(token, reconnect=reconnect)
+
+    async def on_ready(self):
+        """override on_ready event."""
+        if self.user is None:
+            raise AttributeError("Expected client to be logged in.")
+        name = self.user.global_name or f"{self.user.name}#{self.user.discriminator}"
+        _log.info(
+            "Client connected as '%s' with %sms ping.",
+            name,
+            round(self.latency * 1000),
+        )
+
+        # Invoke subscribed handlers
+        await self.invoke_event(events.on_ready)
 
     def _build_loader(self) -> dynamicpy.DynamicLoader:
         """Builds a DynamicLoader for finding widgets to add to the client."""
