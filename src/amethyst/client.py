@@ -244,6 +244,9 @@ class AmethystClient(discord.Client):
 
         return coro
 
+    async def setup_hook(self) -> None:
+        await self.invoke_event(events.on_setup_hook)
+
     async def on_ready(self):
         """override on_ready event."""
         if self.user is None:

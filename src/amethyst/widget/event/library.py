@@ -321,6 +321,18 @@ This function is not guaranteed to be the first event called. Likewise, this fun
 This library implements reconnection logic and thus will end up calling this event whenever a RESUME request fails.
 """
 
+on_setup_hook: DiscordPyEvent[[]] = DiscordPyEvent("on_setup_hook")
+"""
+Called after the bot is logged in but before it has connected to the Websocket. Can be used to perform asynchronous setup.
+
+This is only called once, in login(), and will be called before any events are dispatched, making it a better solution than doing such setup in the on_ready() event.
+
+WARNING
+-------
+Since this is called before the websocket connection is made therefore anything that waits for the websocket will deadlock,
+this includes things like wait_for() and wait_until_ready().
+"""
+
 on_resumed: DiscordPyEvent[[]] = DiscordPyEvent("on_resumed")
 """Called when the client has resumed a session."""
 
