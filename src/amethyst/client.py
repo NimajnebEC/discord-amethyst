@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import Any, Coroutine, Self, Type, overload
+from typing import Any, Callable, Coroutine, Self, Type, TypeVar, overload
 
 import discord
 import dynamicpy
@@ -23,6 +23,8 @@ __all__ = ("AmethystClient",)
 _default_modules = [".commands"]
 
 _log = logging.getLogger(__name__)
+
+CoroT = TypeVar("CoroT", bound=Callable[..., Coroutine[Any, Any, Any]])
 
 
 class AmethystClient(discord.Client):
@@ -221,6 +223,26 @@ class AmethystClient(discord.Client):
         """
         self.load()
         await super().start(token, reconnect=reconnect)
+
+    def event(self, coro: CoroT) -> CoroT:
+        # override default event decorator to use new amethyst event system
+        """A decorator that registers an event handler to listen.
+
+        It is recommended to use the `amethyst.event` decorator instead of this as it supports type hints.
+        """
+        name: str = coro.__name__
+        if not hasattr(events, name):
+            raise TypeError(f"Could not find event '{name}'")
+
+        event = getattr(events, name)
+
+        if not isinstance(event, AmethystEvent):
+            raise TypeError(f"Could not find a valid event called '{name}'")
+
+        handler = AmethystEventHandler(coro, event)
+        self.register_event(handler)
+
+        return coro
 
     async def on_ready(self):
         """override on_ready event."""
