@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 from datetime import datetime
 from typing import Any, Callable, Coroutine, Self, Type, TypeVar, overload
 
@@ -7,6 +8,8 @@ import discord
 import dynamicpy
 from discord import app_commands
 from discord.abc import Snowflake
+from discord.utils import MISSING
+from dotenv import load_dotenv
 
 from amethyst import error
 from amethyst.util import is_dict_subset
@@ -21,6 +24,8 @@ from amethyst.widget import (
 )
 
 __all__ = ("AmethystClient",)
+
+_token_environ_key = "AMETHYST-BOT-TOKEN"
 
 _schedule_delay_cutoff = 30
 
@@ -235,8 +240,10 @@ class AmethystClient(discord.Client):
         """
         self._load_modules(search_modules or self._search_modules)
 
-    async def start(self, token: str, *, reconnect: bool = True) -> None:
+    async def start(self, token: str | None = None, *, reconnect: bool = True) -> None:
         """A Shorthand coroutine for `load` + `login` + `connect`.
+
+        Also loads the .env file if it is found in the project directory.
 
         Parameters
         ----------
@@ -249,8 +256,84 @@ class AmethystClient(discord.Client):
             disconnects that lead to bad state will not be handled (such as
             invalid sharding payloads or bad tokens).
         """
+        load_dotenv()
         self.load()
+
+        if token is None and _token_environ_key not in os.environ:
+            raise RuntimeError("Bot token was not supplied in parameters or eviron.")
+        token = token or os.environ[_token_environ_key]
+
         await super().start(token, reconnect=reconnect)
+
+    def run(
+        self,
+        token: str | None = None,
+        *,
+        reconnect: bool = True,
+        log_handler: logging.Handler | None = MISSING,
+        log_formatter: logging.Formatter = MISSING,
+        log_level: int = MISSING,
+        root_logger: bool = False,
+    ) -> None:
+        """A blocking call that abstracts away the event loop
+        initialisation from you.
+
+        If you want more control over the event loop then this
+        function should not be used. Use `start` coroutine
+        or `connect` + `login`.
+
+        This function also sets up the logging library to make it easier
+        for beginners to know what is going on with the library. For more
+        advanced users, this can be disabled by passing ``None`` to
+        the ``log_handler`` parameter.
+
+        WARNING
+        -------
+        This function must be the last function to call due to the fact that it
+        is blocking. That means that registration of events or anything being
+        called after this function call will not execute until it returns.
+
+        Parameters
+        -----------
+        token: `str`
+            The authentication token. Do not prefix this token with
+            anything as the library will do it for you.
+        reconnect: `bool`
+            If we should attempt reconnecting, either due to internet
+            failure or a specific failure on Discord's part. Certain
+            disconnects that lead to bad state will not be handled (such as
+            invalid sharding payloads or bad tokens).
+        log_handler: Optional[`logging.Handler`]
+            The log handler to use for the library's logger. If this is ``None``
+            then the library will not set up anything logging related. Logging
+            will still work if ``None`` is passed, though it is your responsibility
+            to set it up.
+
+            The default log handler if not provided is `logging.StreamHandler`.
+
+        log_formatter: `logging.Formatter`
+            The formatter to use with the given log handler. If not provided then it
+            defaults to a colour based logging formatter (if available).
+
+        log_level: `int`
+            The default log level for the library's logger. This is only applied if the
+            ``log_handler`` parameter is not ``None``. Defaults to ``logging.INFO``.
+
+        root_logger: `bool`
+            Whether to set up the root logger rather than the library logger.
+            By default, only the library logger (``'discord'``) is set up. If this
+            is set to ``True`` then the root logger is set up as well.
+
+            Defaults to ``False``.
+        """
+        super().run(
+            token,  # type: ignore
+            reconnect=reconnect,
+            log_handler=log_handler,
+            log_formatter=log_formatter,
+            log_level=log_level,
+            root_logger=root_logger,
+        )
 
     def event(self, coro: CoroT) -> CoroT:
         # override default event decorator to use new amethyst event system
@@ -273,6 +356,9 @@ class AmethystClient(discord.Client):
         return coro
 
     async def setup_hook(self) -> None:
+        pass
+
+        # Invoke subscribed handlers
         await self.invoke_event(events.on_setup_hook)
 
     async def on_ready(self):

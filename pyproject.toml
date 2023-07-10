@@ -8,6 +8,7 @@ packages = [{ include = "amethyst", from = "src" }]
 license = "MIT Licence"
 
 [tool.poetry.dependencies]
+python-dotenv = "^1.0.0"
 discord-py = "^2.3.0"
 dynamicpy = { git = "https://github.com/NimajnebEC/dynamicpy.git" }
 croniter = "^1.4.1"
