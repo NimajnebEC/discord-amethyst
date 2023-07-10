@@ -11,16 +11,15 @@ from amethyst.widget.abc import AmethystPlugin, Callback, CallbackWidget
 __all__ = ("AmethystCommand", "command", "describe")
 
 PluginT = TypeVar("PluginT", bound=AmethystPlugin)
+Coro = Coroutine[Any, Any, None]
 P = ParamSpec("P")
-T = TypeVar("T")
 
-Coro = Coroutine[Any, Any, T]
-CommandCallback = Callback[PluginT, Concatenate[Interaction[Any], P], Coro[T]]
+CommandCallback = Callback[PluginT, Concatenate[Interaction[Any], P], Coro]
 
 
 class AmethystCommand(
-    CallbackWidget[PluginT, Concatenate[Interaction[Any], P], Coro[T]],
-    Command[PluginT, P, T],  # type: ignore
+    CallbackWidget[PluginT, Concatenate[Interaction[Any], P], Coro],
+    Command[PluginT, P, None],  # type: ignore
 ):
     """Represents an Amethyst command.
 
@@ -32,7 +31,7 @@ class AmethystCommand(
         *,
         name: str | locale_str,
         description: str | locale_str,
-        callback: CommandCallback[PluginT, P, T],
+        callback: CommandCallback[PluginT, P],
         hybrid: bool = False,
         nsfw: bool = False,
         parent: Group | None = None,
@@ -63,7 +62,7 @@ def command(
     description: str | locale_str | None = None,
     hybrid: bool = False,
     nsfw: bool = False,
-) -> Callable[[CommandCallback[PluginT, P, T]], AmethystCommand[PluginT, P, T]]:
+) -> Callable[[CommandCallback[PluginT, P]], AmethystCommand[PluginT, P]]:
     """Decorator to creates an `AmethystCommand` from a regular function.
 
     Parameters
@@ -83,7 +82,7 @@ def command(
         Due to a Discord limitation, this does not work on subcommands.
     """
 
-    def decorator(func: CommandCallback[PluginT, P, T]) -> AmethystCommand[PluginT, P, T]:
+    def decorator(func: CommandCallback[PluginT, P]) -> AmethystCommand[PluginT, P]:
         if not inspect.iscoroutinefunction(func):
             raise TypeError("Command function must be a coroutine function")
 
