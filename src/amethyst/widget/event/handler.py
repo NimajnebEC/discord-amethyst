@@ -52,9 +52,12 @@ class AmethystEventHandler(CallbackWidget[PluginT, P, NoneT]):
     """Represents a event handler, consisting of a callback function and the `AmethystEvent` that its subscribed to."""
 
     def __init__(
-        self, callback: Callback[PluginT, P, NoneT], event: AmethystEvent[P, NoneT]
+        self,
+        event: AmethystEvent[P, NoneT],
+        callback: Callback[PluginT, P, NoneT],
+        name: str | None = None,
     ) -> None:
-        super().__init__(callback)
+        super().__init__(callback, name)
         self._event = event
 
     @property
@@ -84,6 +87,6 @@ def event(
                 f"Function must {'' if event._is_coroutine else 'not '}be a coroutine."
             )
 
-        return AmethystEventHandler(func, event)
+        return AmethystEventHandler(event, func)
 
     return decorator

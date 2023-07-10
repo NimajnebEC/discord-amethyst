@@ -267,7 +267,7 @@ class AmethystClient(discord.Client):
         if not isinstance(event, AmethystEvent):
             raise TypeError(f"Could not find a valid event called '{name}'")
 
-        handler = AmethystEventHandler(coro, event)
+        handler = AmethystEventHandler(event, coro)
         self.register_event(handler)
 
         return coro

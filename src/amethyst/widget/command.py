@@ -19,8 +19,8 @@ CommandCallback = Callback[PluginT, Concatenate[Interaction[Any], P], Coro[T]]
 
 
 class AmethystCommand(
+    CallbackWidget[PluginT, Concatenate[Interaction[Any], P], Coro[T]],
     Command[PluginT, P, T],  # type: ignore
-    CallbackWidget,
 ):
     """Represents an Amethyst command.
 
@@ -41,6 +41,7 @@ class AmethystCommand(
         extras: dict[Any, Any] = MISSING
     ):
         self._hybrid: bool = hybrid
+        CallbackWidget.__init__(self, callback, name)  # type: ignore
         Command.__init__(
             self,
             name=name,

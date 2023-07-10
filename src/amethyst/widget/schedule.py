@@ -17,10 +17,11 @@ class AmethystSchedule(CallbackWidget[PluginT, [], Coroutine[Any, Any, None]]):
 
     def __init__(
         self,
-        callback: ScheduleCallback[PluginT],
         cron: str,
+        callback: ScheduleCallback[PluginT],
+        name: str | None = None,
     ) -> None:
-        super().__init__(callback)
+        super().__init__(callback, name)
         # validate cron expression
         try:
             croniter(cron)
@@ -55,6 +56,6 @@ def schedule(cron: str) -> Callable[[ScheduleCallback[PluginT]], AmethystSchedul
     """
 
     def decorator(func: ScheduleCallback[PluginT]) -> AmethystSchedule[PluginT]:
-        return AmethystSchedule(func, cron)
+        return AmethystSchedule(cron, func)
 
     return decorator
