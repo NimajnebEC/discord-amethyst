@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from datetime import datetime
 from typing import Any, Callable, Coroutine, Self, Type, TypeVar, overload
 
 import discord
@@ -14,11 +15,14 @@ from amethyst.widget import (
     AmethystEvent,
     AmethystEventHandler,
     AmethystPlugin,
+    AmethystSchedule,
     DiscordPyEvent,
     events,
 )
 
 __all__ = ("AmethystClient",)
+
+_schedule_delay_cutoff = 30
 
 _default_modules = [".commands"]
 
@@ -42,6 +46,8 @@ class AmethystClient(discord.Client):
         self._tree: app_commands.CommandTree[Self] = app_commands.CommandTree(self)
         self._dependencies: dynamicpy.DependencyLibrary = dynamicpy.DependencyLibrary()
         self._events: dict[AmethystEvent, list[AmethystEventHandler]] = {}
+        self._schedule_sleep_task: asyncio.Task | None = None
+        self._schedules: list[AmethystSchedule] = []
 
     @property
     def home_package(self) -> str | None:
@@ -136,6 +142,28 @@ class AmethystClient(discord.Client):
 
         # Add handler to event map
         self._events[event].append(handler)
+
+    def register_schedule(self, schedule: AmethystSchedule) -> None:
+        """Register an `AmethystSchedule` to the client.
+
+        Parameters
+        ----------
+        schedule : AmethystSchedule
+            The instance `AmethystSchedule` to register to the client.
+        """
+        _log.debug("Registering schedule '%s'", schedule.callback.__name__)
+        self._schedules.append(schedule)
+
+        if self._schedule_sleep_task is None:
+            if self.is_ready():
+                # start loop
+                self.loop.create_task(self._schedule_loop())
+        elif (
+            not self._schedule_sleep_task.cancelled()
+            and not self._schedule_sleep_task.cancelling()
+        ):
+            # Cancel the sleep task to recalculate next_datetime
+            self._schedule_sleep_task.cancel()
 
     @overload
     def invoke_event(
@@ -258,8 +286,40 @@ class AmethystClient(discord.Client):
             round(self.latency * 1000),
         )
 
+        # Start schedule loop
+        if self._schedule_sleep_task is None and len(self._schedules) > 0:
+            self.loop.create_task(self._schedule_loop())
+
         # Invoke subscribed handlers
         await self.invoke_event(events.on_ready)
+
+    async def _schedule_loop(self):
+        """Is responsible for calling schedules"""
+        while not self.is_closed():
+            schedule_map = {s: s.next_occurrence() for s in self._schedules}
+            next_datetime = min(schedule_map.values())
+
+            while True:
+                delay = (next_datetime - datetime.now()).total_seconds()
+                final = delay <= _schedule_delay_cutoff
+
+                if not final:
+                    delay /= 2
+
+                # Sleep until next point
+                self._schedule_sleep_task = asyncio.Task(asyncio.sleep(delay))
+                try:
+                    await self._schedule_sleep_task
+                except asyncio.CancelledError:
+                    break  # Break to recalculate next_datetime
+
+                # Invoke schedules
+                if final:
+                    schedules = [s for s, d in schedule_map.items() if d == next_datetime]
+                    _log.debug("Invoking schedules %s", schedules)
+                    asyncio.gather(*(s.invoke() for s in schedules))
+                    await asyncio.sleep(1)  # sleep until the end of the second
+                    break  # Break and recalculate for next schedule
 
     def _build_loader(self) -> dynamicpy.DynamicLoader:
         """Builds a DynamicLoader for finding widgets to add to the client."""
@@ -268,6 +328,9 @@ class AmethystClient(discord.Client):
         loader.register_type_handler(lambda _, v: self.register_command(v), AmethystCommand)
         loader.register_type_handler(
             lambda _, v: self.register_event(v), AmethystEventHandler
+        )
+        loader.register_type_handler(
+            lambda _, v: self.register_schedule(v), AmethystSchedule
         )
         loader.register_handler(
             lambda _, v: self.register_plugin(v),
