@@ -27,6 +27,15 @@ class AmethystEvent(Generic[P, NoneT]):
     """
 
     def __init__(self, name: str, is_coroutine: bool = False) -> None:
+        """Represents a subscribable event and the callback signature.
+
+        Parameters
+        ----------
+        name: `str`
+            The name of this event.
+        is_coroutine : `bool`, optional
+            Wether this event will be called asynchronously, by default False
+        """
         self._is_coroutine: bool = is_coroutine
         self._name = name
 
@@ -49,7 +58,10 @@ class DiscordPyEvent(AmethystEvent[P, Coroutine]):
 
 
 class AmethystEventHandler(CallbackWidget[PluginT, P, NoneT]):
-    """Represents a event handler, consisting of a callback function and the `AmethystEvent` that its subscribed to."""
+    """Represents a event handler, consisting of a callback function and the `AmethystEvent` that its subscribed to.
+
+    These are not usually created manually, instead they are created using the `amethyst.event` decorator.
+    """
 
     def __init__(
         self,
@@ -57,6 +69,19 @@ class AmethystEventHandler(CallbackWidget[PluginT, P, NoneT]):
         callback: Callback[PluginT, P, NoneT],
         name: str | None = None,
     ) -> None:
+        """Represents a event handler, consisting of a callback function and the `AmethystEvent` that its subscribed to.
+
+        These are not usually created manually, instead they are created using the `amethyst.event` decorator.
+
+        Parameters
+        ----------
+        event: `AmethystEvent[P, NoneT]`
+            The event to subscribe to.
+        callback : `Callable[Concatenate[PluginT, P], NoneT] | Callable[P, NoneT]`
+            The callback function that will be invoked for this event.
+        name: `str`, optional
+            The name of this event handler widget, by default None
+        """
         super().__init__(callback, name)
         self._event = event
 
@@ -71,11 +96,11 @@ def event(
 ) -> Callable[
     [HandlerCallback[PluginT, P, NoneT]], AmethystEventHandler[PluginT, P, NoneT]
 ]:
-    """Decorator to create an `AmethystEventHandler` from a regular function.
+    """Decorator to designate a regular function to be called when the specified event is invoked.
 
     Parameters
     ----------
-    event : AmethystEvent
+    event: `AmethystEvent`
         The event to subscribe to.
     """
 

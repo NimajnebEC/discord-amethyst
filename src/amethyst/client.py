@@ -39,6 +39,8 @@ CoroT = TypeVar("CoroT", bound=Callable[..., Coroutine[Any, Any, Any]])
 
 
 class AmethystClient(discord.Client):
+    """Represents a connection to Discord. This class extends discord.Client and is the primary home of amethyt's additions."""
+
     def __init__(
         self,
         intents: discord.Intents,
@@ -46,6 +48,74 @@ class AmethystClient(discord.Client):
         search_modules: list[str] | None = None,
         **options: Any,
     ) -> None:
+        """Represents a connection to Discord. This class extends discord.Client and is the primary home of amethyt's additions.
+
+        Parameters
+        ----------
+        intents: `Intents`
+            The intents that you want to enable for the session. This is a way of
+            disabling and enabling certain gateway events from triggering and being sent.
+        search_modules : `list[str]`, optional
+            The modules to search for widgets and plugins in
+        max_messages: `int`, optional
+            The maximum number of messages to store in the internal message cache.
+            This defaults to ``1000``. Passing in ``None`` disables the message cache.
+        proxy: `str`, optional
+            Proxy URL.
+        proxy_auth: `aiohttp.BasicAuth`, optional
+            An object that represents proxy HTTP Basic Authorization.
+        shard_id: `int`, optional
+            Integer starting at ``0`` and less than `.shard_count`.
+        shard_count: `int`, optional
+            The total number of shards.
+        application_id: `int`
+            The client's application ID.
+        member_cache_flags: `MemberCacheFlags`
+            Allows for finer control over how the library caches members.
+            If not given, defaults to cache as much as possible with the
+            currently selected intents.
+        chunk_guilds_at_startup: `bool`
+            Indicates if `.on_ready` should be delayed to chunk all guilds
+            at start-up if necessary. This operation is incredibly slow for large
+            amounts of guilds. The default is ``True`` if `Intents.members`
+            is ``True``.
+        status: `.Status`, optional
+            A status to start your presence with upon logging on to Discord.
+        activity: `.BaseActivity`, optional
+            An activity to start your presence with upon logging on to Discord.
+        allowed_mentions: `AllowedMentions`, optional
+            Control how the client handles mentions by default on every message sent.
+        heartbeat_timeout: `float`
+            The maximum numbers of seconds before timing out and restarting the
+            WebSocket in the case of not receiving a HEARTBEAT_ACK. Useful if
+            processing the initial packets take too long to the point of disconnecting
+            you. The default timeout is 60 seconds.
+        guild_ready_timeout: `float`
+            The maximum number of seconds to wait for the GUILD_CREATE stream to end before
+            preparing the member cache and firing READY. The default timeout is 2 seconds.
+        assume_unsync_clock: `bool`
+            Whether to assume the system clock is unsynced. This applies to the ratelimit handling
+            code. If this is set to ``True``, the default, then the library uses the time to reset
+            a rate limit bucket given by Discord. If this is ``False`` then your system clock is
+            used to calculate how long to sleep for. If this is set to ``False`` it is recommended to
+            sync your system clock to Google's NTP server.
+        enable_debug_events: `bool`
+            Whether to enable events that are useful only for debugging gateway related information.
+
+            Right now this involves :func:`on_socket_raw_receive` and :func:`on_socket_raw_send`. If
+            this is ``False`` then those events will not be dispatched (due to performance considerations).
+            To enable these events, this must be set to ``True``. Defaults to ``False``.
+        http_trace: `aiohttp.TraceConfig`
+            The trace configuration to use for tracking HTTP requests the library does using ``aiohttp``.
+            This allows you to check requests the library is using. For more information, check the
+            [aiohttp documentation](https://docs.aiohttp.org/en/stable/client_advanced.html#client-tracing).
+        max_ratelimit_timeout: `float`, optional
+            The maximum number of seconds to wait when a non-global rate limit is encountered.
+            If a request requires sleeping for more than the seconds passed in, then
+            :exc:`~discord.RateLimited` will be raised. By default, there is no timeout limit.
+            In order to prevent misuse and unnecessary bans, the minimum value this can be
+            set to is ``30.0`` seconds.
+        """
         super().__init__(intents=intents, **options)
         self._search_modules = search_modules or _default_modules
         self._home_package: str | None = self._get_home_package()
@@ -73,14 +143,14 @@ class AmethystClient(discord.Client):
 
         Parameters
         ----------
-        dependency : Any
+        dependency : `Any`
             The dependency to add the library.
 
         Raises
         ------
-        TypeError
+        `TypeError`
             Raised when attempting to add a type to the library.
-        DuplicateDependencyError
+        `DuplicateDependencyError`
             Raised when another dependency with that type already exists in the library.
         """
         self._dependencies.add(dependency)
@@ -90,7 +160,7 @@ class AmethystClient(discord.Client):
 
         Parameters
         ----------
-        command : AmethystCommand
+        `command` : `AmethystCommand`
             The command to register.
         """
         _log.debug("Registering command '%s'", command.name)
@@ -101,7 +171,7 @@ class AmethystClient(discord.Client):
 
         Parameters
         ----------
-        plugin : Type[AmethystPlugin]
+        plugin : `Type[AmethystPlugin]`
             A type inheriting from `AmethystPlugin` to register to the client.
         """
         _log.debug("Registering plugin '%s'", plugin.__name__)
@@ -126,7 +196,7 @@ class AmethystClient(discord.Client):
 
         Parameters
         ----------
-        event : AmethystEvent
+        event : `AmethystEvent`
             The instance `AmethystEventHandler` to register to the client.
         """
         event = handler.event
@@ -155,7 +225,7 @@ class AmethystClient(discord.Client):
 
         Parameters
         ----------
-        schedule : AmethystSchedule
+        schedule : `AmethystSchedule`
             The instance `AmethystSchedule` to register to the client.
         """
         _log.debug("Registering schedule '%s'", schedule.callback.__name__)
@@ -187,12 +257,12 @@ class AmethystClient(discord.Client):
 
         Parameters
         ----------
-        event : AmethystEvent
+        event : `AmethystEvent`
             The event to invoke the handlers of.
 
         Returns
         -------
-        Coroutine | None
+        `Coroutine | None`
             When the event is a coroutine, a `Coroutine` will be returned. Otherwise `None`.
         """
         handlers = self._events.get(event, [])
@@ -206,12 +276,12 @@ class AmethystClient(discord.Client):
 
         Parameters
         ----------
-        guild : Snowflake, optional
+        guild : `Snowflake`, optional
             The guild to check commands from. If left blank, checks global commands.
 
         Returns
         -------
-        bool
+        `bool`
             Returns true if the local commands match the remote commands.
         """
         local = {c.name: c.to_dict() for c in self.tree.get_commands(guild=guild)}
@@ -237,7 +307,7 @@ class AmethystClient(discord.Client):
 
         Parameters
         ----------
-        search_modules : list[str], optional
+        search_modules : `list[str]`, optional
             The modules to search through, will use the modules specified in the constructor by default
         """
         self._load_modules(search_modules or self._search_modules)
@@ -249,10 +319,10 @@ class AmethystClient(discord.Client):
 
         Parameters
         ----------
-        token: str
+        token: `str`
             The authentication token. Do not prefix this token with
             anything as the library will do it for you.
-        reconnect: bool
+        reconnect: `bool`
             If we should attempt reconnecting, either due to internet
             failure or a specific failure on Discord's part. Certain
             disconnects that lead to bad state will not be handled (such as
@@ -305,7 +375,7 @@ class AmethystClient(discord.Client):
             failure or a specific failure on Discord's part. Certain
             disconnects that lead to bad state will not be handled (such as
             invalid sharding payloads or bad tokens).
-        log_handler: Optional[`logging.Handler`]
+        log_handler: `logging.Handler`, optional
             The log handler to use for the library's logger. If this is ``None``
             then the library will not set up anything logging related. Logging
             will still work if ``None`` is passed, though it is your responsibility

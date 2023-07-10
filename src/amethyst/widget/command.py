@@ -23,7 +23,7 @@ class AmethystCommand(
 ):
     """Represents an Amethyst command.
 
-    These are usually not created manually, instead they are created using the `amethyst.command` decorator.
+    These are not usually created manually, instead they are created using the `amethyst.command` decorator.
     """
 
     def __init__(
@@ -32,14 +32,41 @@ class AmethystCommand(
         name: str | locale_str,
         description: str | locale_str,
         callback: CommandCallback[PluginT, P],
-        hybrid: bool = False,
         nsfw: bool = False,
         parent: Group | None = None,
         guild_ids: list[int] | None = None,
         auto_locale_strings: bool = True,
         extras: dict[Any, Any] = MISSING
     ):
-        self._hybrid: bool = hybrid
+        """Represents an Amethyst command.
+
+        These are not usually created manually, instead they are created using the `amethyst.command` decorator.
+
+        Parameters
+        -----------
+        name: `str | locale_str`
+            The name of the application command.
+        description: `str | locale_str`
+            The description of the application command. This shows up in the UI to describe the application command.
+        callback: `Callable[Concatenate[PluginT, P], Coroutine[Any, Any, T]] | Callable[P, Coroutine[Any, Any, T]]`
+            The coroutine that is executed when the command is called.
+        auto_locale_strings: `bool`
+            If this is set to ``True``, then all translatable strings will implicitly
+            be wrapped into `locale_str` rather than `str`. This could
+            avoid some repetition and be more ergonomic for certain defaults such
+            as default command names, command descriptions, and parameter names.
+            Defaults to ``True``.
+        nsfw: `bool`
+            Whether the command is NSFW and should only work in NSFW channels.
+            Defaults to ``False``.
+
+            Due to a Discord limitation, this does not work on subcommands.
+        parent: `Group`, optional
+            The parent application command. ``None`` if there isn't one.
+        extras: `dict`
+            A dictionary that can be used to store extraneous data.
+            The library will not touch any values or keys within this dictionary.
+        """
         CallbackWidget.__init__(self, callback, name)  # type: ignore
         Command.__init__(
             self,
@@ -60,23 +87,20 @@ class AmethystCommand(
 def command(
     name: str | locale_str | None = None,
     description: str | locale_str | None = None,
-    hybrid: bool = False,
     nsfw: bool = False,
 ) -> Callable[[CommandCallback[PluginT, P]], AmethystCommand[PluginT, P]]:
-    """Decorator to creates an `AmethystCommand` from a regular function.
+    """Decorator to turn a normal function into an application command.
 
     Parameters
     ------------
-    name : str, optional
+    name : `str`, optional
         The name of the application command. If not given, it defaults to a lower-case
         version of the callback name.
-    description : str, optional
+    description : `str`, optional
         The description of the application command. This shows up in the UI to describe
         the application command. If not given, it defaults to the first line of the docstring
         of the callback shortened to 100 characters.
-    hybrid : bool, optional
-        Wether the command should also be usable as a message command. Defaults to `False`.
-    nsfw : bool, optional
+    nsfw : `bool`, optional
         Whether the command is NSFW and should only work in NSFW channels. Defaults to `False`.
 
         Due to a Discord limitation, this does not work on subcommands.
@@ -99,7 +123,6 @@ def command(
             description=desc,
             callback=func,
             parent=None,
-            hybrid=hybrid,
             nsfw=nsfw,
         )
 

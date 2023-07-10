@@ -29,6 +29,7 @@ class AmethystPlugin(ABC):
     """The base class for all Amethyst plugins to inherit from."""
 
     def __init__(self) -> None:
+        """The client will attempt to bind constructor parameters to dependencies when registered."""
         self._client: AmethystClient
 
     def __new__(cls, *args, **kwargs) -> Self:
@@ -67,6 +68,15 @@ class CallbackWidget(ABC, Generic[PluginT, P, T]):
     """The base class for all callback based widgets."""
 
     def __init__(self, callback: Callback[PluginT, P, T], name: str | None = None) -> None:
+        """The base class for all callback based widgets.
+
+        Parameters
+        ----------
+        callback : `Callable[Concatenate[PluginT, P], T] | Callable[P, T]`
+            _description_
+        name : `str`, optional
+            The name of this callback widget, by default None
+        """
         self._callback: Callback[PluginT, P, T] = callback
         self._binding: PluginT | None = None
         self._name: str | None = name
@@ -81,7 +91,7 @@ class CallbackWidget(ABC, Generic[PluginT, P, T]):
 
         Returns
         -------
-        T
+        `T`
             The returned result from the callback function.
         """
         if self._binding is not None:

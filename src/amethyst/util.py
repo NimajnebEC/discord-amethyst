@@ -10,14 +10,14 @@ def is_dict_subset(superset: dict[Any, Any], subset: dict[Any, Any]) -> bool:
 
     Parameters
     ----------
-    superset : dict[Any, Any]
+    superset : `dict[Any, Any]`
         The dictionary to check contains the subset.
-    subset : dict[Any, Any]
+    subset : `dict[Any, Any]`
         The dictionary to check is contained within the superset.
 
     Returns
     -------
-    bool
+    `bool`
         True if all the keys in `subset` are present and have equal values in `superset`.
     """
     return _node_is_subset(superset, subset)
