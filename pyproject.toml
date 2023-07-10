@@ -10,6 +10,7 @@ license = "MIT Licence"
 [tool.poetry.dependencies]
 discord-py = "^2.3.0"
 dynamicpy = { git = "https://github.com/NimajnebEC/dynamicpy.git" }
+croniter = "^1.4.1"
 python = "^3.11"
 
 

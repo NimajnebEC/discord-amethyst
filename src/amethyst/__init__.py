@@ -6,6 +6,7 @@ from amethyst.widget import (
     describe,
     event,
     events,
+    schedule,
 )
 
 __all__ = (
@@ -16,4 +17,5 @@ __all__ = (
     "AmethystPlugin",
     "event",
     "events",
+    "schedule",
 )

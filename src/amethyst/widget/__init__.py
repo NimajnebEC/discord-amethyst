@@ -7,6 +7,7 @@ from amethyst.widget.event import (
     event,
     events,
 )
+from amethyst.widget.schedule import AmethystSchedule, schedule
 
 __all__ = (
     "AmethystCommand",
@@ -18,4 +19,6 @@ __all__ = (
     "DiscordPyEvent",
     "event",
     "events",
+    "AmethystSchedule",
+    "schedule",
 )
