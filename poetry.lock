@@ -282,21 +282,17 @@ voice = ["PyNaCl (>=1.3.0,<1.6)"]
 
 [[package]]
 name = "dynamicpy"
-version = "1.0.1"
+version = "1.1.0"
 description = "A python module for dynamically interacting with objects to improve expandability."
 optional = false
-python-versions = "^3.8.1"
-files = []
-develop = false
+python-versions = ">=3.8.1,<4.0.0"
+files = [
+    {file = "dynamicpy-1.1.0-py3-none-any.whl", hash = "sha256:70cddf182d52b345a0d3f679febfbfa6dae323d3c4fc757bf2d2aa60298c5f96"},
+    {file = "dynamicpy-1.1.0.tar.gz", hash = "sha256:efcc2e7ca16f1c105cf872a31388545e10974cf67adef5ba970eb8ce39483d6f"},
+]
 
 [package.dependencies]
-typeguard = "^4.0.0"
-
-[package.source]
-type = "git"
-url = "https://github.com/NimajnebEC/dynamicpy.git"
-reference = "HEAD"
-resolved_reference = "18488e9e55c4f35fa8cc11754434076ed356c424"
+typeguard = ">=4.0.0,<5.0.0"
 
 [[package]]
 name = "flake8"
@@ -759,4 +755,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "e93e21e70a4a413b48f2d57de6ef2e597b939344071896d67e9feb99b9b2d4eb"
+content-hash = "f82df0b7c340947f598a3edc08bf8c15542ff4deb5c57e05cd83e33773d20077"
