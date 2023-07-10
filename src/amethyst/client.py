@@ -25,7 +25,9 @@ from amethyst.widget import (
 
 __all__ = ("AmethystClient",)
 
-_token_environ_key = "AMETHYST-BOT-TOKEN"
+_environ_key_token = "AMETHYST-BOT-TOKEN"
+_environ_key_sync_guild = "AMETHSYT-SYNC-GUILD"
+_environ_key_auto_sync = "AMETHYST-AUTO-SYNC"
 
 _schedule_delay_cutoff = 30
 
@@ -259,9 +261,9 @@ class AmethystClient(discord.Client):
         load_dotenv()
         self.load()
 
-        if token is None and _token_environ_key not in os.environ:
+        if token is None and _environ_key_token not in os.environ:
             raise RuntimeError("Bot token was not supplied in parameters or eviron.")
-        token = token or os.environ[_token_environ_key]
+        token = token or os.environ[_environ_key_token]
 
         await super().start(token, reconnect=reconnect)
 
@@ -356,7 +358,16 @@ class AmethystClient(discord.Client):
         return coro
 
     async def setup_hook(self) -> None:
-        pass
+        # Synchronise commands if out of date
+        if os.getenv(_environ_key_auto_sync) != "false":
+            guild = None
+            if _environ_key_sync_guild in os.environ:
+                guild = discord.Object(os.environ[_environ_key_sync_guild])
+                self.tree.copy_global_to(guild=guild)
+
+            if not await self.commands_in_sync(guild):
+                _log.info("Synchronising Commands...")
+                await self.tree.sync(guild=guild)
 
         # Invoke subscribed handlers
         await self.invoke_event(events.on_setup_hook)
