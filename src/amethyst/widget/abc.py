@@ -58,10 +58,11 @@ class AmethystPlugin(ABC):
             )
         return self._client
 
+    @classmethod
     @property
-    def name(self) -> str:
+    def name(cls) -> str:
         """The name of this plugin."""
-        return type(self).__name__
+        return cls.__name__
 
 
 class CallbackWidget(ABC, Generic[PluginT, P, T]):
