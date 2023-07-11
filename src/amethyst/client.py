@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import logging
 import os
 from datetime import datetime
@@ -36,6 +37,21 @@ _default_modules = [".command", ".commands", ".plugins", ".plugin"]
 _log = logging.getLogger(__name__)
 
 CoroT = TypeVar("CoroT", bound=Callable[..., Coroutine[Any, Any, Any]])
+T = TypeVar("T")
+
+
+def try_register(func: Callable[[T], None], widget: T) -> None:
+    """Calls the specified register method, suppressing any raised `WidgetAlreadyRegisteredError`.
+
+    Parameters
+    ----------
+    func : `Callable[[T], None]`
+        The register method to wrap.
+    widget : `T`
+        The widget to register.
+    """
+    with contextlib.suppress(error.WidgetAlreadyRegisteredError):
+        return func(widget)
 
 
 class AmethystClient(discord.Client):
@@ -122,9 +138,11 @@ class AmethystClient(discord.Client):
         self._loader: dynamicpy.DynamicLoader = self._build_loader()
         self._tree: app_commands.CommandTree[Self] = app_commands.CommandTree(self)
         self._dependencies: dynamicpy.DependencyLibrary = dynamicpy.DependencyLibrary()
-        self._events: dict[AmethystEvent, list[AmethystEventHandler]] = {}
         self._schedule_sleep_task: asyncio.Task | None = None
+        self._plugins: list[Type[AmethystPlugin]] = []
+        self._events: list[AmethystEventHandler] = []
         self._schedules: list[AmethystSchedule] = []
+        self._commands: list[AmethystCommand] = []
 
     @property
     def home_package(self) -> str | None:
@@ -163,8 +181,14 @@ class AmethystClient(discord.Client):
         `command` : `AmethystCommand`
             The command to register.
         """
+        # Ensure not already registered
+        if command in self._commands:
+            raise error.WidgetAlreadyRegisteredError(
+                f"Command {command.name} has already been registered."
+            )
         _log.debug("Registering command '%s'", command.name)
         self._tree.add_command(command)
+        self._commands.append(command)
 
     def register_plugin(self, plugin: Type[AmethystPlugin]) -> None:
         """Register an `AmethystPlugin` to the client.
@@ -174,7 +198,14 @@ class AmethystClient(discord.Client):
         plugin : `Type[AmethystPlugin]`
             A type inheriting from `AmethystPlugin` to register to the client.
         """
-        _log.debug("Registering plugin '%s'", plugin.__name__)
+
+        # Ensure not already registered
+        if plugin in self._plugins:
+            raise error.WidgetAlreadyRegisteredError(
+                f"Plugin {plugin.name} has already been registered."
+            )
+        _log.debug("Registering plugin '%s'", plugin.name)
+        self._plugins.append(plugin)
 
         try:
             instance = plugin.__new__(plugin)
@@ -182,11 +213,11 @@ class AmethystClient(discord.Client):
             self._dependencies.inject(instance.__init__)
         except dynamicpy.DependencyNotFoundError as e:
             raise error.RegisterPluginError(
-                f"Could not find a dependency when injecting into '{plugin.__name__}'"
+                f"Could not find a dependency when injecting into '{plugin.name}'"
             ) from e
         except dynamicpy.InjectDependenciesError as e:
             raise error.RegisterPluginError(
-                f"Error injecting dependencies into '{plugin.__name__}'"
+                f"Error injecting dependencies into '{plugin.name}'"
             ) from e
 
         self._loader.load_object(instance)
@@ -199,26 +230,27 @@ class AmethystClient(discord.Client):
         event : `AmethystEvent`
             The instance `AmethystEventHandler` to register to the client.
         """
+
+        # Ensure not already registered
+        if handler in self._events:
+            raise error.WidgetAlreadyRegisteredError(
+                f"Handler {handler.name} has already been registered."
+            )
+        self._events.append(handler)
         event = handler.event
         _log.debug(
             "Registering handler '%s' for event '%s'",
-            handler.callback.__name__,
+            handler.name,
             event.name,
         )
 
-        if event not in self._events:
-            self._events[event] = []
-
-            # Setup invoker for default events
-            if isinstance(handler.event, DiscordPyEvent) and not hasattr(self, event.name):
-                setattr(
-                    self,
-                    event.name,
-                    lambda *args, **kwargs: self.invoke_event(event, *args, **kwargs),
-                )
-
-        # Add handler to event map
-        self._events[event].append(handler)
+        # Setup invoker for default events
+        if isinstance(handler.event, DiscordPyEvent) and not hasattr(self, event.name):
+            setattr(
+                self,
+                event.name,
+                lambda *args, **kwargs: self.invoke_event(event, *args, **kwargs),
+            )
 
     def register_schedule(self, schedule: AmethystSchedule) -> None:
         """Register an `AmethystSchedule` to the client.
@@ -228,7 +260,13 @@ class AmethystClient(discord.Client):
         schedule : `AmethystSchedule`
             The instance `AmethystSchedule` to register to the client.
         """
-        _log.debug("Registering schedule '%s'", schedule.callback.__name__)
+
+        # Ensure not already registered
+        if schedule in self._schedules:
+            raise error.WidgetAlreadyRegisteredError(
+                f"Schedule {schedule.name} has already been registered."
+            )
+        _log.debug("Registering schedule '%s'", schedule.name)
         self._schedules.append(schedule)
 
         if self._schedule_sleep_task is None:
@@ -265,7 +303,7 @@ class AmethystClient(discord.Client):
         `Coroutine | None`
             When the event is a coroutine, a `Coroutine` will be returned. Otherwise `None`.
         """
-        handlers = self._events.get(event, [])
+        handlers = (e for e in self._events if e.event == event)
         if event.is_coroutine:
             return asyncio.gather(*(h.invoke(*args, **kwargs) for h in handlers))  # type: ignore
         for handler in handlers:
@@ -495,15 +533,17 @@ class AmethystClient(discord.Client):
         """Builds a DynamicLoader for finding widgets to add to the client."""
         loader = dynamicpy.DynamicLoader()
 
-        loader.register_type_handler(lambda _, v: self.register_command(v), AmethystCommand)
         loader.register_type_handler(
-            lambda _, v: self.register_event(v), AmethystEventHandler
+            lambda _, v: try_register(self.register_command, v), AmethystCommand
         )
         loader.register_type_handler(
-            lambda _, v: self.register_schedule(v), AmethystSchedule
+            lambda _, v: try_register(self.register_event, v), AmethystEventHandler
+        )
+        loader.register_type_handler(
+            lambda _, v: try_register(self.register_schedule, v), AmethystSchedule
         )
         loader.register_handler(
-            lambda _, v: self.register_plugin(v),
+            lambda _, v: try_register(self.register_plugin, v),
             lambda _, v: isinstance(v, type)
             and v is not AmethystPlugin
             and issubclass(v, AmethystPlugin),
