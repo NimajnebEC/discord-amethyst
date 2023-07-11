@@ -1,11 +1,11 @@
 [tool.poetry]
 name = "discord-amethyst"
-version = "0.1.0"
-description = ""
+version = "1.0.0"
+description = "An opinionated extension for discord.py."
 authors = ["NimajnebEC <nimajnebec@users.noreply.github.com>"]
-readme = "README.md"
 packages = [{ include = "amethyst", from = "src" }]
-license = "MIT Licence"
+readme = "README.md"
+license = "MIT"
 
 [tool.poetry.dependencies]
 python-dotenv = "^1.0.0"
