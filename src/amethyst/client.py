@@ -31,7 +31,7 @@ _environ_key_auto_sync = "AMETHYST-AUTO-SYNC"
 
 _schedule_delay_cutoff = 30
 
-_default_modules = [".commands"]
+_default_modules = [".command", ".commands", ".plugins", ".plugin"]
 
 _log = logging.getLogger(__name__)
 
@@ -117,7 +117,7 @@ class AmethystClient(discord.Client):
             set to is ``30.0`` seconds.
         """
         super().__init__(intents=intents, **options)
-        self._search_modules = search_modules or _default_modules
+        self._search_modules: list[str] | None = search_modules
         self._home_package: str | None = self._get_home_package()
         self._loader: dynamicpy.DynamicLoader = self._build_loader()
         self._tree: app_commands.CommandTree[Self] = app_commands.CommandTree(self)
@@ -310,7 +310,10 @@ class AmethystClient(discord.Client):
         search_modules : `list[str]`, optional
             The modules to search through, will use the modules specified in the constructor by default
         """
-        self._load_modules(search_modules or self._search_modules)
+        self._load_modules(
+            search_modules or self._search_modules or _default_modules,
+            search_modules is None and self._search_modules is None,
+        )
 
     async def start(self, token: str | None = None, *, reconnect: bool = True) -> None:
         """A Shorthand coroutine for `load` + `login` + `connect`.
@@ -508,13 +511,17 @@ class AmethystClient(discord.Client):
 
         return loader
 
-    def _load_modules(self, search_modules: list[str]) -> None:
+    def _load_modules(self, search_modules: list[str], allow_missing: bool = False) -> None:
         """Loads the modules specified in `search_modules` using the client's DynamicLoader."""
         _log.debug("Loading modules %s", search_modules)
         for module in search_modules:
             if self.home_package is None and module.startswith("."):
                 module = module[1:]
-            self._loader.load_module(module, self.home_package)
+            try:
+                self._loader.load_module(module, self.home_package)
+            except ImportError:
+                if not allow_missing:
+                    raise
 
     def _get_home_package(self) -> str | None:
         """Return the home package of the application."""
