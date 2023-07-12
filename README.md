@@ -107,9 +107,9 @@ Amethyst uses [python-dotenv](https://pypi.org/project/python-dotenv/) to load `
 
 | Name                | Default | Description                                                                                     |
 | ------------------- | ------- | ----------------------------------------------------------------------------------------------- |
-| AMETHYST-BOT-TOKEN  | _None_  | If present, `token` can be omitted from the `AmethystClient.run` and this will be used instead. |
-| AMETHYST-AUTO-SYNC  | true    | If `true`, the client will synchronise app_commands if they are out of date with Discord.       |
-| AMETHYST-SYNC-GUILD | _None_  | If present, app_commands will only be synchronised to specified guild id.                       |
+| AMETHYST_BOT_TOKEN  | _None_  | If present, `token` can be omitted from the `AmethystClient.run` and this will be used instead. |
+| AMETHYST_AUTO_SYNC  | true    | If `true`, the client will synchronise app_commands if they are out of date with Discord.       |
+| AMETHYST_SYNC_GUILD | _None_  | If present, app_commands will only be synchronised to specified guild id.                       |
 
 ## Roadmap
 

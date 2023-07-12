@@ -26,9 +26,9 @@ from amethyst.widget import (
 
 __all__ = ("AmethystClient",)
 
-_environ_key_token = "AMETHYST-BOT-TOKEN"
-_environ_key_sync_guild = "AMETHSYT-SYNC-GUILD"
-_environ_key_auto_sync = "AMETHYST-AUTO-SYNC"
+_environ_key_token = "AMETHYST_BOT_TOKEN"
+_environ_key_sync_guild = "AMETHSYT_SYNC_GUILD"
+_environ_key_auto_sync = "AMETHYST_AUTO_SYNC"
 
 _schedule_delay_cutoff = 30
 
