@@ -1,6 +1,6 @@
 # Discord Amethyst
 
-An opinionated extension for [discord.py](https://github.com/Rapptz/discord.py). Amethyst adds a handful of features that I found myself re-implementing or wanting for many of my Discord bots such as automatic app command synchronisation and job scheduling.
+An opinionated extension for [discord.py](https://github.com/Rapptz/discord.py), inspired by [JellyCommands](https://jellycommands.dev/). Amethyst adds a handful of features that I found myself re-implementing or wanting for many of my Discord bots such as automatic app command synchronisation and job scheduling.
 
 ## Widgets
 

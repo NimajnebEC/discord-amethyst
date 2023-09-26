@@ -4,6 +4,7 @@ version = "1.0.1"
 description = "An opinionated extension for discord.py."
 authors = ["NimajnebEC <nimajnebec@users.noreply.github.com>"]
 packages = [{ include = "amethyst", from = "src" }]
+repository = "https://github.com/NimajnebEC/discord-amethyst"
 readme = "README.md"
 license = "MIT"
 
