@@ -105,7 +105,7 @@ def event(
     """
 
     def decorator(
-        func: HandlerCallback[PluginT, P, NoneT]
+        func: HandlerCallback[PluginT, P, NoneT],
     ) -> AmethystEventHandler[PluginT, P, NoneT]:
         if event._is_coroutine != inspect.iscoroutinefunction(func):
             raise TypeError(

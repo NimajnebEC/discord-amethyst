@@ -36,7 +36,7 @@ class AmethystCommand(
         parent: Group | None = None,
         guild_ids: list[int] | None = None,
         auto_locale_strings: bool = True,
-        extras: dict[Any, Any] = MISSING
+        extras: dict[Any, Any] = MISSING,
     ):
         """Represents an Amethyst command.
 
