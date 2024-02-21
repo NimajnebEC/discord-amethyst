@@ -416,6 +416,17 @@ files = [
 ]
 
 [[package]]
+name = "lavender-logging"
+version = "1.0.0"
+description = "An opinionated logger and configuration system."
+optional = false
+python-versions = ">=3.8.1,<4.0.0"
+files = [
+    {file = "lavender_logging-1.0.0-py3-none-any.whl", hash = "sha256:da8ea15f94e56fe21523fc602d7eddb386569ed70e9e13ef3914aa70217fcf46"},
+    {file = "lavender_logging-1.0.0.tar.gz", hash = "sha256:85a1641a3178db1ae56da4d3d7da97566f5c950b909b8dd31f2e8562621ff350"},
+]
+
+[[package]]
 name = "multidict"
 version = "6.0.4"
 description = "multidict implementation"
@@ -728,4 +739,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.11"
-content-hash = "e711c81f0763edc51f6dbf73b7cd463f0eaa59248ca057e717303d17512a511a"
+content-hash = "bd45f03ac386e4f4ea8067d4e97f5e706115605b3d1d6bc798c24c074b0b5352"
