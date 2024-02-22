@@ -550,34 +550,3 @@ class AmethystClient(discord.Client):
         )
 
         return loader
-
-    def _load_modules(self, search_modules: list[str], allow_missing: bool = False) -> None:
-        """Loads the modules specified in `search_modules` using the client's DynamicLoader."""
-        _log.debug("Loading modules %s", search_modules)
-        for module in search_modules:
-            if self.home_package is None and module.startswith("."):
-                module = module[1:]
-            try:
-                self._loader.load_module(module, self.home_package)
-            except ImportError:
-                if not allow_missing:
-                    raise
-
-    def _get_home_package(self) -> str | None:
-        """Return the home package of the application."""
-        try:
-            module = dynamicpy.get_foreign_module()
-
-            if dynamicpy.is_package(module):
-                package = module
-            else:
-                package = dynamicpy.get_module_parent(module)
-
-            _log.debug("Home package located as '%s'", package)
-            return package
-        except dynamicpy.NoParentError:
-            _log.debug("Instantiating module is top-level.")
-            return None
-        except ImportError as e:
-            _log.error("Error locating home package: %s", e)
-            raise error.ModuleLocateError("Error locating home package") from e
