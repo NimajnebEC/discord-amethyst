@@ -1,6 +1,6 @@
 from typing import Any
 
-__all__ = ("is_dict_subset",)
+__all__ = ("is_dict_subset", "classproperty")
 
 
 def is_dict_subset(superset: dict[Any, Any], subset: dict[Any, Any]) -> bool:
@@ -36,3 +36,11 @@ def _node_is_subset(superset: Any, subset: Any) -> bool:
         #   For each item in the subset, check if any items in the superset match
         return all((any((_node_is_subset(x, y) for x in superset)) for y in subset))
     return superset == subset
+
+
+class classproperty:
+    def __init__(self, func):
+        self.fget = func
+
+    def __get__(self, instance, owner):
+        return self.fget(owner)
