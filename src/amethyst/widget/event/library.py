@@ -4,7 +4,7 @@ from typing import List, Sequence
 import discord
 from discord import app_commands
 
-from amethyst.widget.event.handler import DiscordPyEvent
+from amethyst.widget.event.widget import DiscordEvent
 
 __all__ = (
     "on_app_command_completion",
@@ -87,11 +87,12 @@ __all__ = (
     "on_user_update",
     "on_voice_state_update",
     "on_webhooks_update",
+    "on_setup_hook",
 )
 
-on_raw_app_command_permissions_update: DiscordPyEvent[
+on_raw_app_command_permissions_update: DiscordEvent[
     discord.RawAppCommandPermissionsUpdateEvent
-] = DiscordPyEvent("on_raw_app_command_permissions_update")
+] = DiscordEvent("on_raw_app_command_permissions_update")
 """Called when application command permissions are updated.
 
 Parameters
@@ -100,9 +101,9 @@ payload: RawAppCommandPermissionsUpdateEvent
     The raw event payload data.
 """
 
-on_app_command_completion: DiscordPyEvent[
+on_app_command_completion: DiscordEvent[
     [discord.Interaction, app_commands.Command | app_commands.ContextMenu]
-] = DiscordPyEvent("on_app_command_completion")
+] = DiscordEvent("on_app_command_completion")
 """Called when a app_commands.Command or app_commands.ContextMenu has successfully completed without error.
 
 Parameters
@@ -113,7 +114,7 @@ command: Union[app_commands.Command, app_commands.ContextMenu]
     The command that completed successfully
 """
 
-on_automod_rule_create: DiscordPyEvent[discord.AutoModRule] = DiscordPyEvent(
+on_automod_rule_create: DiscordEvent[discord.AutoModRule] = DiscordEvent(
     "on_automod_rule_create"
 )
 """Called when a AutoModRule is created. You must have manage_guild to receive this.
@@ -126,7 +127,7 @@ rule: AutoModRule
     The rule that was created.
 """
 
-on_automod_rule_update: DiscordPyEvent[discord.AutoModRule] = DiscordPyEvent(
+on_automod_rule_update: DiscordEvent[discord.AutoModRule] = DiscordEvent(
     "on_automod_rule_update"
 )
 """Called when a AutoModRule is updated. You must have manage_guild to receive this.
@@ -139,7 +140,7 @@ rule: AutoModRule
     The rule that was updated.
 """
 
-on_automod_rule_delete: DiscordPyEvent[discord.AutoModRule] = DiscordPyEvent(
+on_automod_rule_delete: DiscordEvent[discord.AutoModRule] = DiscordEvent(
     "on_automod_rule_delete"
 )
 """Called when a AutoModRule is deleted. You must have manage_guild to receive this.
@@ -152,9 +153,7 @@ rule: AutoModRule
     The rule that was deleted.
 """
 
-on_automod_action: DiscordPyEvent[discord.AutoModAction] = DiscordPyEvent(
-    "on_automod_action"
-)
+on_automod_action: DiscordEvent[discord.AutoModAction] = DiscordEvent("on_automod_action")
 """Called when a AutoModAction is created/performed. You must have manage_guild to receive this.
 
 This requires Intents.auto_moderation_execution to be enabled.
@@ -165,7 +164,7 @@ execution: AutoModAction
     The rule execution that was performed.
 """
 
-on_guild_channel_delete: DiscordPyEvent[discord.abc.GuildChannel] = DiscordPyEvent(
+on_guild_channel_delete: DiscordEvent[discord.abc.GuildChannel] = DiscordEvent(
     "on_guild_channel_delete"
 )
 """Called whenever a guild channel is deleted.
@@ -178,7 +177,7 @@ channel: abc.GuildChannel
     The guild channel that got deleted.
 """
 
-on_guild_channel_create: DiscordPyEvent[discord.abc.GuildChannel] = DiscordPyEvent(
+on_guild_channel_create: DiscordEvent[discord.abc.GuildChannel] = DiscordEvent(
     "on_guild_channel_create"
 )
 """Called whenever a guild channel is created.
@@ -191,9 +190,9 @@ channel: abc.GuildChannel
     The guild channel that got created.
 """
 
-on_guild_channel_update: DiscordPyEvent[
+on_guild_channel_update: DiscordEvent[
     [discord.abc.GuildChannel, discord.abc.GuildChannel]
-] = DiscordPyEvent("on_guild_channel_update")
+] = DiscordEvent("on_guild_channel_update")
 """Called whenever a guild channel is updated. e.g. changed name, topic, permissions.
 
 This requires Intents.guilds to be enabled.
@@ -206,9 +205,9 @@ after: abc.GuildChannel
     The updated guild channel's new info.
 """
 
-on_guild_channel_pins_update: DiscordPyEvent[
+on_guild_channel_pins_update: DiscordEvent[
     [discord.abc.GuildChannel | discord.Thread, datetime.datetime]
-] = DiscordPyEvent("on_guild_channel_pins_update")
+] = DiscordEvent("on_guild_channel_pins_update")
 """Called whenever a message is pinned or unpinned from a guild channel.
 
 This requires Intents.guilds to be enabled.
@@ -221,9 +220,9 @@ last_pin: Optional[datetime.datetime]
     The latest message that was pinned as an aware datetime in UTC. Could be None.
 """
 
-on_private_channel_update: DiscordPyEvent[
+on_private_channel_update: DiscordEvent[
     discord.GroupChannel, discord.GroupChannel
-] = DiscordPyEvent("on_private_channel_update")
+] = DiscordEvent("on_private_channel_update")
 """Called whenever a private group DM is updated. e.g. changed name or topic.
 
 This requires Intents.messages to be enabled.
@@ -236,9 +235,9 @@ after: GroupChannel
     The updated group channel's new info.
 """
 
-on_private_channel_pins_update: DiscordPyEvent[
+on_private_channel_pins_update: DiscordEvent[
     [discord.abc.PrivateChannel, datetime.datetime | None]
-] = DiscordPyEvent("on_private_channel_pins_update")
+] = DiscordEvent("on_private_channel_pins_update")
 """Called whenever a message is pinned or unpinned from a private channel.
 
 Parameters
@@ -250,7 +249,7 @@ last_pin: Optional[datetime.datetime]
 """
 
 
-on_raw_typing: DiscordPyEvent[discord.RawTypingEvent] = DiscordPyEvent("on_raw_typing")
+on_raw_typing: DiscordEvent[discord.RawTypingEvent] = DiscordEvent("on_raw_typing")
 """Called when someone begins typing a message. Unlike on_typing() this is called regardless of the channel and user being in the internal cache.
 
 This requires Intents.typing to be enabled.
@@ -261,20 +260,20 @@ payload: RawTypingEvent
     The raw event payload data.
 """
 
-on_connect: DiscordPyEvent[[]] = DiscordPyEvent("on_connect")
+on_connect: DiscordEvent[[]] = DiscordEvent("on_connect")
 """Called when the client has successfully connected to Discord. This is not the same as the client being fully prepared, see on_ready() for that.
 
 The warnings on on_ready() also apply.
 """
 
-on_disconnect: DiscordPyEvent[[]] = DiscordPyEvent("on_disconnect")
+on_disconnect: DiscordEvent[[]] = DiscordEvent("on_disconnect")
 """Called when the client has disconnected from Discord, or a connection attempt to Discord has failed.
 This could happen either through the internet being disconnected, explicit calls to close, or Discord terminating the connection one way or the other.
 
 This function can be called many times without a corresponding on_connect() call.
 """
 
-on_socket_event_type: DiscordPyEvent[str] = DiscordPyEvent("on_socket_event_type")
+on_socket_event_type: DiscordEvent[str] = DiscordEvent("on_socket_event_type")
 """Called whenever a websocket event is received from the WebSocket.
 
 This is mainly useful for logging how many events you are receiving from the Discord gateway.
@@ -285,7 +284,7 @@ event_type: str
     The event type from Discord that is received, e.g. 'READY'.
 """
 
-on_socket_raw_receive: DiscordPyEvent[str] = DiscordPyEvent("on_socket_raw_receive")
+on_socket_raw_receive: DiscordEvent[str] = DiscordEvent("on_socket_raw_receive")
 """Called whenever a message is completely received from the WebSocket, before it's processed and parsed.
 This event is always dispatched when a complete message is received and the passed data is not parsed in any way.
 
@@ -299,7 +298,7 @@ msg: str
     The message passed in from the WebSocket library.
 """
 
-on_socket_raw_send: DiscordPyEvent[bytes | str] = DiscordPyEvent("on_socket_raw_send")
+on_socket_raw_send: DiscordEvent[bytes | str] = DiscordEvent("on_socket_raw_send")
 """Called whenever a send operation is done on the WebSocket before the message is sent. The passed parameter is the message that is being sent to the WebSocket.
 
 This is only really useful for grabbing the WebSocket stream and debugging purposes.
@@ -312,7 +311,7 @@ payload: Union[bytes, str]
     The message that is about to be passed on to the WebSocket library. It can be bytes to denote a binary message or str to denote a regular text message.
 """
 
-on_ready: DiscordPyEvent[[]] = DiscordPyEvent("on_ready")
+on_ready: DiscordEvent[[]] = DiscordEvent("on_ready")
 """Called when the client is done preparing the data received from Discord. Usually after login is successful and the Client.guilds and co. are filled up.
 
 WARNING
@@ -321,7 +320,7 @@ This function is not guaranteed to be the first event called. Likewise, this fun
 This library implements reconnection logic and thus will end up calling this event whenever a RESUME request fails.
 """
 
-on_setup_hook: DiscordPyEvent[[]] = DiscordPyEvent("on_setup_hook")
+on_setup_hook: DiscordEvent[[]] = DiscordEvent("on_setup_hook")
 """
 Called after the bot is logged in but before it has connected to the Websocket. Can be used to perform asynchronous setup.
 
@@ -333,10 +332,10 @@ Since this is called before the websocket connection is made therefore anything 
 this includes things like wait_for() and wait_until_ready().
 """
 
-on_resumed: DiscordPyEvent[[]] = DiscordPyEvent("on_resumed")
+on_resumed: DiscordEvent[[]] = DiscordEvent("on_resumed")
 """Called when the client has resumed a session."""
 
-on_guild_available: DiscordPyEvent[discord.Guild] = DiscordPyEvent("on_guild_available")
+on_guild_available: DiscordEvent[discord.Guild] = DiscordEvent("on_guild_available")
 """Called when a guild becomes available. The guild must have existed in the Client.guilds cache.
 
 This requires Intents.guilds to be enabled.
@@ -347,7 +346,7 @@ guild: Guild
     The Guild that has changed availability.
 """
 
-on_guild_join: DiscordPyEvent[discord.Guild] = DiscordPyEvent("on_guild_join")
+on_guild_join: DiscordEvent[discord.Guild] = DiscordEvent("on_guild_join")
 """Called when a Guild is either created by the Client or when the Client joins a guild.
 
 This requires Intents.guilds to be enabled.
@@ -358,7 +357,7 @@ guild: Guild
     The guild that was joined.
 """
 
-on_guild_remove: DiscordPyEvent[discord.Guild] = DiscordPyEvent("on_guild_remove")
+on_guild_remove: DiscordEvent[discord.Guild] = DiscordEvent("on_guild_remove")
 """Called when a Guild is removed from the Client.
 
 This happens through, but not limited to, these circumstances:
@@ -377,7 +376,7 @@ guild: Guild
     The guild that got removed.
 """
 
-on_guild_update: DiscordPyEvent[discord.Guild, discord.Guild] = DiscordPyEvent(
+on_guild_update: DiscordEvent[discord.Guild, discord.Guild] = DiscordEvent(
     "on_guild_update"
 )
 """Called when a Guild updates, for example:
@@ -396,9 +395,9 @@ after: Guild
     The guild after being updated.
 """
 
-on_guild_emojis_update: DiscordPyEvent[
+on_guild_emojis_update: DiscordEvent[
     discord.Guild, Sequence[discord.Emoji], Sequence[discord.Emoji]
-] = DiscordPyEvent("on_guild_emojis_update")
+] = DiscordEvent("on_guild_emojis_update")
 """Called when a Guild adds or removes Emoji.
 
 This requires Intents.emojis_and_stickers to be enabled.
@@ -413,9 +412,9 @@ after: Sequence[Emoji]
     A list of emojis after the update.
 """
 
-on_guild_stickers_update: DiscordPyEvent[
+on_guild_stickers_update: DiscordEvent[
     [discord.Guild, Sequence[discord.GuildSticker], Sequence[discord.GuildSticker]]
-] = DiscordPyEvent("on_guild_stickers_update")
+] = DiscordEvent("on_guild_stickers_update")
 """Called when a Guild updates its stickers.
 
 This requires Intents.emojis_and_stickers to be enabled.
@@ -430,7 +429,7 @@ after: Sequence[GuildSticker]
     A list of stickers after the update.
 """
 
-on_audit_log_entry_create: DiscordPyEvent[discord.AuditLogEntry] = DiscordPyEvent(
+on_audit_log_entry_create: DiscordEvent[discord.AuditLogEntry] = DiscordEvent(
     "on_audit_log_entry_create"
 )
 """Called when a Guild gets a new audit log entry. You must have view_audit_log to receive this.
@@ -451,7 +450,7 @@ entry: AuditLogEntry
     The audit log entry that was created.
 """
 
-on_invite_create: DiscordPyEvent[discord.Invite] = DiscordPyEvent("on_invite_create")
+on_invite_create: DiscordEvent[discord.Invite] = DiscordEvent("on_invite_create")
 """Called when an Invite is created. You must have manage_channels to receive this.
 
 There is a rare possibility that the Invite.guild and Invite.channel attributes will be of Object rather than the respective models.
@@ -464,7 +463,7 @@ invite: Invite
     The invite that was created.
 """
 
-on_invite_delete: DiscordPyEvent[discord.Invite] = DiscordPyEvent("on_invite_delete")
+on_invite_delete: DiscordEvent[discord.Invite] = DiscordEvent("on_invite_delete")
 """Called when an Invite is deleted. You must have manage_channels to receive this.
 
 There is a rare possibility that the Invite.guild and Invite.channel attributes will be of Object rather than the respective models.
@@ -478,7 +477,7 @@ invite: Invite
     The invite that was deleted.
 """
 
-on_integration_create: DiscordPyEvent[discord.Integration] = DiscordPyEvent(
+on_integration_create: DiscordEvent[discord.Integration] = DiscordEvent(
     "on_integration_create"
 )
 """Called when an integration is created.
@@ -491,7 +490,7 @@ integration: Integration
     The integration that was created.
 """
 
-on_integration_update: DiscordPyEvent[discord.Integration] = DiscordPyEvent(
+on_integration_update: DiscordEvent[discord.Integration] = DiscordEvent(
     "on_integration_update"
 )
 """Called when an integration is updated.
@@ -504,7 +503,7 @@ integration: Integration
     The integration that was updated.
 """
 
-on_guild_integrations_update: DiscordPyEvent[discord.Guild] = DiscordPyEvent(
+on_guild_integrations_update: DiscordEvent[discord.Guild] = DiscordEvent(
     "on_guild_integrations_update"
 )
 """Called whenever an integration is created, modified, or removed from a guild.
@@ -517,7 +516,7 @@ guild: Guild
     The guild that had its integrations updated.
 """
 
-on_webhooks_update: DiscordPyEvent[discord.abc.GuildChannel] = DiscordPyEvent(
+on_webhooks_update: DiscordEvent[discord.abc.GuildChannel] = DiscordEvent(
     "on_webhooks_update"
 )
 """Called whenever a webhook is created, modified, or removed from a guild channel.
@@ -530,9 +529,9 @@ channel: abc.GuildChannel
     The channel that had its webhooks updated.
 """
 
-on_raw_integration_delete: DiscordPyEvent[
-    discord.RawIntegrationDeleteEvent
-] = DiscordPyEvent("on_raw_integration_delete")
+on_raw_integration_delete: DiscordEvent[discord.RawIntegrationDeleteEvent] = DiscordEvent(
+    "on_raw_integration_delete"
+)
 """Called when an integration is deleted.
 
 This requires Intents.integrations to be enabled.
@@ -543,7 +542,7 @@ payload: RawIntegrationDeleteEvent
     The raw event payload data.
 """
 
-on_interaction: DiscordPyEvent[discord.Interaction] = DiscordPyEvent("on_interaction")
+on_interaction: DiscordEvent[discord.Interaction] = DiscordEvent("on_interaction")
 """Called when an interaction happened.
 
 This currently happens due to slash command invocations or components being used.
@@ -559,7 +558,7 @@ interaction: Interaction
     The interaction data.
 """
 
-on_member_join: DiscordPyEvent[discord.Member] = DiscordPyEvent("on_member_join")
+on_member_join: DiscordEvent[discord.Member] = DiscordEvent("on_member_join")
 """Called when a Member joins a Guild.
 
 This requires Intents.members to be enabled.
@@ -570,7 +569,7 @@ member: Member
     The member who joined.
 """
 
-on_member_remove: DiscordPyEvent[discord.Member] = DiscordPyEvent("on_member_remove")
+on_member_remove: DiscordEvent[discord.Member] = DiscordEvent("on_member_remove")
 """Called when a Member leaves a Guild.
 
 If the guild or member could not be found in the internal cache, this event will not be called. You may use on_raw_member_remove() instead.
@@ -583,7 +582,7 @@ member: Member
     The member who left.
 """
 
-on_raw_member_remove: DiscordPyEvent[discord.RawMemberRemoveEvent] = DiscordPyEvent(
+on_raw_member_remove: DiscordEvent[discord.RawMemberRemoveEvent] = DiscordEvent(
     "on_raw_member_remove"
 )
 """Called when a Member leaves a Guild.
@@ -598,7 +597,7 @@ payload: RawMemberRemoveEvent
     The raw event payload data.
 """
 
-on_member_update: DiscordPyEvent[discord.Member, discord.Member] = DiscordPyEvent(
+on_member_update: DiscordEvent[discord.Member, discord.Member] = DiscordEvent(
     "on_member_update"
 )
 """Called when a Member updates their profile.
@@ -624,9 +623,7 @@ after: Member
     The updated member's updated info.
 """
 
-on_user_update: DiscordPyEvent[discord.User, discord.User] = DiscordPyEvent(
-    "on_user_update"
-)
+on_user_update: DiscordEvent[discord.User, discord.User] = DiscordEvent("on_user_update")
 """Called when a User updates their profile.
 
 This is called when one or more of the following things change:
@@ -645,9 +642,9 @@ after: User
     The updated user's updated info.
 """
 
-on_member_ban: DiscordPyEvent[
-    discord.Guild, discord.User | discord.Member
-] = DiscordPyEvent("on_member_ban")
+on_member_ban: DiscordEvent[discord.Guild, discord.User | discord.Member] = DiscordEvent(
+    "on_member_ban"
+)
 """Called when a user gets banned from a Guild.
 
 This requires Intents.moderation to be enabled.
@@ -660,9 +657,7 @@ user: User | Member
     The user that got banned. Can be either User or Member depending on whether the user was in the guild or not at the time of removal.
 """
 
-on_member_unban: DiscordPyEvent[discord.Guild, discord.User] = DiscordPyEvent(
-    "on_member_unban"
-)
+on_member_unban: DiscordEvent[discord.Guild, discord.User] = DiscordEvent("on_member_unban")
 """Called when a User gets unbanned from a Guild.
 
 This requires Intents.moderation to be enabled.
@@ -675,7 +670,7 @@ user: User
     The user that got unbanned.
 """
 
-on_presence_update: DiscordPyEvent[discord.Member, discord.Member] = DiscordPyEvent(
+on_presence_update: DiscordEvent[discord.Member, discord.Member] = DiscordEvent(
     "on_presence_update"
 )
 """Called when a Member updates their presence.
@@ -694,7 +689,7 @@ after: Member
     The updated member's updated info.
 """
 
-on_message: DiscordPyEvent[discord.Message] = DiscordPyEvent("on_message")
+on_message: DiscordEvent[discord.Message] = DiscordEvent("on_message")
 """Called when a Message is created and sent.
 
 This requires Intents.messages to be enabled.
@@ -711,7 +706,7 @@ message: Message
     The current message.
 """
 
-on_message_edit: DiscordPyEvent[discord.Message, discord.Message] = DiscordPyEvent(
+on_message_edit: DiscordEvent[discord.Message, discord.Message] = DiscordEvent(
     "on_message_edit"
 )
 """Called when a Message receives an update event.
@@ -737,7 +732,7 @@ after: Message
     The current version of the message.
 """
 
-on_message_delete: DiscordPyEvent[discord.Message] = DiscordPyEvent("on_message_delete")
+on_message_delete: DiscordEvent[discord.Message] = DiscordEvent("on_message_delete")
 """Called when a message is deleted. If the message is not found in the internal message cache, then this event will not be called.
 Messages might not be in the cache if the message is too old or the client is participating in high traffic guilds.
 
@@ -751,7 +746,7 @@ message: Message
     The deleted message.
 """
 
-on_bulk_message_delete: DiscordPyEvent[List[discord.Message]] = DiscordPyEvent(
+on_bulk_message_delete: DiscordEvent[List[discord.Message]] = DiscordEvent(
     "on_bulk_message_delete"
 )
 """Called when messages are bulk deleted.
@@ -769,7 +764,7 @@ messages: List[Message]
     The messages that have been deleted.
 """
 
-on_raw_message_edit: DiscordPyEvent[discord.RawMessageUpdateEvent] = DiscordPyEvent(
+on_raw_message_edit: DiscordEvent[discord.RawMessageUpdateEvent] = DiscordEvent(
     "on_raw_message_edit"
 )
 """Called when a message is edited. Unlike on_message_edit(), this is called regardless of the state of the internal message cache.
@@ -793,7 +788,7 @@ payload: RawMessageUpdateEvent
     The raw event payload data.
 """
 
-on_raw_message_delete: DiscordPyEvent[discord.RawMessageDeleteEvent] = DiscordPyEvent(
+on_raw_message_delete: DiscordEvent[discord.RawMessageDeleteEvent] = DiscordEvent(
     "on_raw_message_delete"
 )
 """Called when a message is deleted. Unlike on_message_delete(), this is called regardless of the message being in the internal message cache or not.
@@ -808,9 +803,9 @@ payload: RawMessageDeleteEvent
     The raw event payload data.
 """
 
-on_raw_bulk_message_delete: DiscordPyEvent[
-    discord.RawBulkMessageDeleteEvent
-] = DiscordPyEvent("on_raw_bulk_message_delete")
+on_raw_bulk_message_delete: DiscordEvent[discord.RawBulkMessageDeleteEvent] = DiscordEvent(
+    "on_raw_bulk_message_delete"
+)
 """Called when a bulk delete is triggered. Unlike on_bulk_message_delete(), this is called regardless of the messages being in the internal message cache or not.
 
 If the messages are found in the message cache, they can be accessed via RawBulkMessageDeleteEvent.cached_messages.
@@ -823,9 +818,9 @@ payload: RawBulkMessageDeleteEvent
     The raw event payload data.
 """
 
-on_reaction_add: DiscordPyEvent[
+on_reaction_add: DiscordEvent[
     discord.Reaction, discord.Member | discord.User
-] = DiscordPyEvent("on_reaction_add")
+] = DiscordEvent("on_reaction_add")
 """Called when a message has a reaction added to it. Similar to on_message_edit(), if the message is not found in the internal message cache,
 then this event will not be called. Consider using on_raw_reaction_add() instead.
 
@@ -844,9 +839,9 @@ user: Member | User
     The user who added the reaction.
 """
 
-on_reaction_remove: DiscordPyEvent[
+on_reaction_remove: DiscordEvent[
     discord.Reaction, discord.Member | discord.User
-] = DiscordPyEvent("on_reaction_remove")
+] = DiscordEvent("on_reaction_remove")
 """Called when a message has a reaction removed from it. Similar to on_message_edit,
 if the message is not found in the internal message cache, then this event will not be called.
 
@@ -864,7 +859,7 @@ user: Member | User
     The user whose reaction was removed.
 """
 
-on_reaction_clear: DiscordPyEvent[discord.Message, List[discord.Reaction]] = DiscordPyEvent(
+on_reaction_clear: DiscordEvent[discord.Message, List[discord.Reaction]] = DiscordEvent(
     "on_reaction_clear"
 )
 """Called when a message has all its reactions removed from it.
@@ -880,7 +875,7 @@ reactions: List[Reaction]
     The reactions that were removed.
 """
 
-on_reaction_clear_emoji: DiscordPyEvent[discord.Reaction] = DiscordPyEvent(
+on_reaction_clear_emoji: DiscordEvent[discord.Reaction] = DiscordEvent(
     "on_reaction_clear_emoji"
 )
 """Called when a message has a specific reaction removed from it.
@@ -896,7 +891,7 @@ reaction: Reaction
     The reaction that got cleared.
 """
 
-on_raw_reaction_add: DiscordPyEvent[discord.RawReactionActionEvent] = DiscordPyEvent(
+on_raw_reaction_add: DiscordEvent[discord.RawReactionActionEvent] = DiscordEvent(
     "on_raw_reaction_add"
 )
 """Called when a message has a reaction added. Unlike on_reaction_add(), this is called regardless of the state of the internal message cache.
@@ -909,7 +904,7 @@ payload: RawReactionActionEvent
     The raw event payload data.
 """
 
-on_raw_reaction_remove: DiscordPyEvent[discord.RawReactionActionEvent] = DiscordPyEvent(
+on_raw_reaction_remove: DiscordEvent[discord.RawReactionActionEvent] = DiscordEvent(
     "on_raw_reaction_remove"
 )
 """Called when a message has a reaction removed. Unlike on_reaction_remove(), this is called regardless of the state of the internal message cache.
@@ -922,7 +917,7 @@ payload: RawReactionActionEvent
     The raw event payload data.
 """
 
-on_raw_reaction_clear: DiscordPyEvent[discord.RawReactionClearEvent] = DiscordPyEvent(
+on_raw_reaction_clear: DiscordEvent[discord.RawReactionClearEvent] = DiscordEvent(
     "on_raw_reaction_clear"
 )
 """Called when a message has all its reactions removed. Unlike on_reaction_clear(), this is called regardless of the state of the internal message cache.
@@ -935,9 +930,9 @@ payload: RawReactionClearEvent
     The raw event payload data.
 """
 
-on_raw_reaction_clear_emoji: DiscordPyEvent[
+on_raw_reaction_clear_emoji: DiscordEvent[
     discord.RawReactionClearEmojiEvent
-] = DiscordPyEvent("on_raw_reaction_clear_emoji")
+] = DiscordEvent("on_raw_reaction_clear_emoji")
 """Called when a message has a specific reaction removed from it. Unlike on_reaction_clear_emoji(), this is called regardless of the state of the internal message cache.
 
 This requires Intents.reactions to be enabled.
@@ -948,7 +943,7 @@ payload: RawReactionClearEmojiEvent
     The raw event payload data.
 """
 
-on_guild_role_create: DiscordPyEvent[discord.Role] = DiscordPyEvent("on_guild_role_create")
+on_guild_role_create: DiscordEvent[discord.Role] = DiscordEvent("on_guild_role_create")
 """Called when a Guild creates a new Role.
 
 To get the guild it belongs to, use Role.guild.
@@ -961,7 +956,7 @@ role: Role
     The role that was created.
 """
 
-on_guild_role_delete: DiscordPyEvent[discord.Role] = DiscordPyEvent("on_guild_role_delete")
+on_guild_role_delete: DiscordEvent[discord.Role] = DiscordEvent("on_guild_role_delete")
 """Called when a Guild deletes a Role.
 
 To get the guild it belongs to, use Role.guild.
@@ -974,7 +969,7 @@ role: Role
     The role that was deleted.
 """
 
-on_guild_role_update: DiscordPyEvent[discord.Role, discord.Role] = DiscordPyEvent(
+on_guild_role_update: DiscordEvent[discord.Role, discord.Role] = DiscordEvent(
     "on_guild_role_update"
 )
 """Called when a Role is changed guild-wide.
@@ -989,7 +984,7 @@ after: Role
     The updated role's updated info.
 """
 
-on_scheduled_event_create: DiscordPyEvent[discord.ScheduledEvent] = DiscordPyEvent(
+on_scheduled_event_create: DiscordEvent[discord.ScheduledEvent] = DiscordEvent(
     "on_scheduled_event_create"
 )
 """Called when a ScheduledEvent is created.
@@ -1002,7 +997,7 @@ event: ScheduledEvent
     The scheduled event that was created.
 """
 
-on_scheduled_event_delete: DiscordPyEvent[discord.ScheduledEvent] = DiscordPyEvent(
+on_scheduled_event_delete: DiscordEvent[discord.ScheduledEvent] = DiscordEvent(
     "on_scheduled_event_delete"
 )
 """Called when a ScheduledEvent is deleted.
@@ -1015,9 +1010,9 @@ event: ScheduledEvent
     The scheduled event that was deleted.
 """
 
-on_scheduled_event_update: DiscordPyEvent[
+on_scheduled_event_update: DiscordEvent[
     discord.ScheduledEvent, discord.ScheduledEvent
-] = DiscordPyEvent("on_scheduled_event_update")
+] = DiscordEvent("on_scheduled_event_update")
 """Called when a ScheduledEvent is updated.
 
 This requires Intents.guild_scheduled_events to be enabled.
@@ -1037,9 +1032,9 @@ after: ScheduledEvent
     The scheduled event after the update.
 """
 
-on_scheduled_event_user_add: DiscordPyEvent[
+on_scheduled_event_user_add: DiscordEvent[
     discord.ScheduledEvent, discord.User
-] = DiscordPyEvent("on_scheduled_event_user_add")
+] = DiscordEvent("on_scheduled_event_user_add")
 """Called when a user is added to a ScheduledEvent.
 
 This requires Intents.guild_scheduled_events to be enabled.
@@ -1052,9 +1047,9 @@ user: User
     The user that was added.
 """
 
-on_scheduled_event_user_remove: DiscordPyEvent[
+on_scheduled_event_user_remove: DiscordEvent[
     discord.ScheduledEvent, discord.User
-] = DiscordPyEvent("on_scheduled_event_user_remove")
+] = DiscordEvent("on_scheduled_event_user_remove")
 """Called when a user is removed from a ScheduledEvent.
 
 This requires Intents.guild_scheduled_events to be enabled.
@@ -1067,7 +1062,7 @@ user: User
     The user that was removed.
 """
 
-on_stage_instance_create: DiscordPyEvent[discord.StageInstance] = DiscordPyEvent(
+on_stage_instance_create: DiscordEvent[discord.StageInstance] = DiscordEvent(
     "on_stage_instance_create"
 )
 """Called when a StageInstance is created for a StageChannel.
@@ -1078,7 +1073,7 @@ stage_instance: StageInstance
     The stage instance that was created.
 """
 
-on_stage_instance_delete: DiscordPyEvent[discord.StageInstance] = DiscordPyEvent(
+on_stage_instance_delete: DiscordEvent[discord.StageInstance] = DiscordEvent(
     "on_stage_instance_delete"
 )
 """Called when a StageInstance is deleted for a StageChannel.
@@ -1089,9 +1084,9 @@ stage_instance: StageInstance
     The stage instance that was deleted.
 """
 
-on_stage_instance_update: DiscordPyEvent[
+on_stage_instance_update: DiscordEvent[
     discord.StageInstance, discord.StageInstance
-] = DiscordPyEvent("on_stage_instance_update")
+] = DiscordEvent("on_stage_instance_update")
 """Called when a StageInstance is updated.
 
 The following, but not limited to, examples illustrate when this event is called:
@@ -1106,7 +1101,7 @@ after: StageInstance
     The stage instance after the update.
 """
 
-on_thread_create: DiscordPyEvent[discord.Thread] = DiscordPyEvent("on_thread_create")
+on_thread_create: DiscordEvent[discord.Thread] = DiscordEvent("on_thread_create")
 """Called whenever a thread is created.
 
 Note that you can get the guild from Thread.guild.
@@ -1119,7 +1114,7 @@ thread: Thread
     The thread that was created.
 """
 
-on_thread_join: DiscordPyEvent[discord.Thread] = DiscordPyEvent("on_thread_join")
+on_thread_join: DiscordEvent[discord.Thread] = DiscordEvent("on_thread_join")
 """Called whenever a thread is joined.
 
 Note that you can get the guild from Thread.guild.
@@ -1132,7 +1127,7 @@ thread: Thread
     The thread that was joined.
 """
 
-on_thread_update: DiscordPyEvent[discord.Thread, discord.Thread] = DiscordPyEvent(
+on_thread_update: DiscordEvent[discord.Thread, discord.Thread] = DiscordEvent(
     "on_thread_update"
 )
 """Called whenever a thread is updated.
@@ -1151,7 +1146,7 @@ after: Thread
     The updated thread's new info.
 """
 
-on_thread_remove: DiscordPyEvent[discord.Thread] = DiscordPyEvent("on_thread_remove")
+on_thread_remove: DiscordEvent[discord.Thread] = DiscordEvent("on_thread_remove")
 """Called whenever a thread is removed. This is different from a thread being deleted.
 
 Note that you can get the guild from Thread.guild.
@@ -1167,7 +1162,7 @@ thread: Thread
     The thread that was removed.
 """
 
-on_thread_delete: DiscordPyEvent[discord.Thread] = DiscordPyEvent("on_thread_delete")
+on_thread_delete: DiscordEvent[discord.Thread] = DiscordEvent("on_thread_delete")
 """Called whenever a thread is deleted. If the thread could not be found in the internal cache, this event will not be called.
 Threads will not be in the cache if they are archived.
 If you need this information, use on_raw_thread_delete() instead.
@@ -1182,7 +1177,7 @@ thread: Thread
     The thread that was deleted.
 """
 
-on_raw_thread_update: DiscordPyEvent[discord.RawThreadUpdateEvent] = DiscordPyEvent(
+on_raw_thread_update: DiscordEvent[discord.RawThreadUpdateEvent] = DiscordEvent(
     "on_raw_thread_update"
 )
 """Called whenever a thread is updated. Unlike on_thread_update(), this is called regardless of the thread being in the internal thread cache or not.
@@ -1195,7 +1190,7 @@ payload: RawThreadUpdateEvent
     The raw event payload data.
 """
 
-on_raw_thread_delete: DiscordPyEvent[discord.RawThreadDeleteEvent] = DiscordPyEvent(
+on_raw_thread_delete: DiscordEvent[discord.RawThreadDeleteEvent] = DiscordEvent(
     "on_raw_thread_delete"
 )
 """Called whenever a thread is deleted. Unlike on_thread_delete(), this is called regardless of the thread being in the internal thread cache or not.
@@ -1208,7 +1203,7 @@ payload: RawThreadDeleteEvent
     The raw event payload data.
 """
 
-on_thread_member_join: DiscordPyEvent[discord.ThreadMember] = DiscordPyEvent(
+on_thread_member_join: DiscordEvent[discord.ThreadMember] = DiscordEvent(
     "on_thread_member_join"
 )
 """Called when a ThreadMember joins a Thread.
@@ -1223,7 +1218,7 @@ member: ThreadMember
     The member who joined.
 """
 
-on_thread_member_remove: DiscordPyEvent[discord.ThreadMember] = DiscordPyEvent(
+on_thread_member_remove: DiscordEvent[discord.ThreadMember] = DiscordEvent(
     "on_thread_member_remove"
 )
 """Called when a ThreadMember leaves a Thread.
@@ -1238,9 +1233,9 @@ member: ThreadMember
     The member who left.
 """
 
-on_raw_thread_member_remove: DiscordPyEvent[
-    discord.RawThreadMembersUpdate
-] = DiscordPyEvent("on_raw_thread_member_remove")
+on_raw_thread_member_remove: DiscordEvent[discord.RawThreadMembersUpdate] = DiscordEvent(
+    "on_raw_thread_member_remove"
+)
 """Called when a ThreadMember leaves a Thread. Unlike on_thread_member_remove(), this is called regardless of the member being in the internal thread's members cache or not.
 
 This requires Intents.members to be enabled.
@@ -1251,9 +1246,9 @@ payload: RawThreadMembersUpdate
     The raw event payload data.
 """
 
-on_voice_state_update: DiscordPyEvent[
+on_voice_state_update: DiscordEvent[
     discord.Member, discord.VoiceState, discord.VoiceState
-] = DiscordPyEvent("on_voice_state_update")
+] = DiscordEvent("on_voice_state_update")
 """Called when a Member changes their VoiceState.
 
 The following, but not limited to, examples illustrate when this event is called:

@@ -8,29 +8,13 @@ import discord
 import dynamicpy
 
 from amethyst import error
-from amethyst.util import classproperty
+from amethyst.abc import Plugin, Widget
 
 _default_modules = [".command", ".commands", ".plugins", ".plugin"]
 
 _log = logging.getLogger(__name__)
 
-
-PluginT = TypeVar("PluginT", "Plugin", "Plugin")
-
-
-class Plugin:
-    """The base class for all Amethyst plugins to inherit from."""
-
-    def __init__(self) -> None:
-        """The client will attempt to bind constructor parameters to dependencies when registered."""
-
-    @property
-    def client(self) -> Client:
-        return getattr(self, "_client") if hasattr(self, "_client") else None  # type: ignore
-
-    @classproperty
-    def name(cls):
-        return cls.__name__
+PluginT = TypeVar("PluginT", bound=Plugin)
 
 
 class Client(discord.Client):
@@ -45,7 +29,6 @@ class Client(discord.Client):
         self._instantiating_package = self._get_instantiating_package()
         self._dependencies = dynamicpy.DependencyLibrary()
         self._module_loader = self._build_module_loader()
-        self._plugin_loader = self._build_plugin_loader()
         self._plugins: Dict[Type[Plugin], Plugin] = {}
 
     def get_plugin(self, plugin: Type[PluginT]) -> PluginT:
@@ -75,7 +58,7 @@ class Client(discord.Client):
                 f"Error injecting dependencies into '{plugin.name}'"
             ) from e
 
-        self._plugin_loader.load_object(instance)
+        self._load_plugin(instance)
         self._plugins[plugin] = instance
 
     def add_dependency(self, dependency: Any) -> None:
@@ -97,6 +80,15 @@ class Client(discord.Client):
         """
         self._dependencies.add(dependency)
 
+    def _load_plugin(self, plugin: Plugin) -> None:
+        loader = dynamicpy.DynamicLoader()
+
+        @loader.widget_handler(Widget)
+        def _(widget: Widget):
+            widget.register(plugin, self)
+
+        loader.load_object(plugin)
+
     def _build_module_loader(self) -> dynamicpy.DynamicLoader:
         loader = dynamicpy.DynamicLoader()
 
@@ -111,9 +103,6 @@ class Client(discord.Client):
                     self.register_plugin(value)
 
         return loader
-
-    def _build_plugin_loader(self) -> dynamicpy.DynamicLoader:
-        return dynamicpy.DynamicLoader()
 
     def _get_instantiating_package(self) -> str | None:
         """Return the package the application was instantiated from."""
