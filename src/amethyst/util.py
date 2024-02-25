@@ -42,5 +42,9 @@ class classproperty:
     def __init__(self, func):
         self.fget = func
 
-    def __get__(self, instance, owner):
+    def __get__(self, _, owner):
         return self.fget(owner)
+
+
+def safesubclass(obj: object, cls: type) -> bool:
+    return isinstance(obj, type) and issubclass(obj, cls)

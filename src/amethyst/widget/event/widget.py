@@ -1,16 +1,28 @@
 from __future__ import annotations
 
-from typing import Any, Callable, Concatenate, Coroutine, Generic, ParamSpec, TypeVar
+import asyncio
+import logging
+from typing import (
+    Any,
+    Callable,
+    Concatenate,
+    Coroutine,
+    Dict,
+    Generic,
+    List,
+    ParamSpec,
+    TypeVar,
+)
 
-from amethyst.abc import Plugin, Widget
-from amethyst.client import Client
+from amethyst.abc import BaseWidget, Plugin, WidgetPlugin
 
 NoneT = TypeVar("NoneT", bound=None | Coroutine[Any, Any, None])
 P = ParamSpec("P")
 T = TypeVar("T")
 
-
 __all__ = ("Event", "DiscordEvent", "EventWidget", "event")
+
+_log = logging.getLogger(__name__)
 
 
 class Event(Generic[P, NoneT]):
@@ -24,14 +36,8 @@ class Event(Generic[P, NoneT]):
     ```
     """
 
-    def __init__(self, name: str) -> None:
-        """Represents a subscribable event and the callback signature.
-
-        Parameters
-        ----------
-        name: `str`
-            The name of this event.
-        """
+    def __init__(self, name: str, coroutine: bool = True) -> None:
+        self._coroutine = coroutine
         self._name = name
 
     @property
@@ -39,38 +45,67 @@ class Event(Generic[P, NoneT]):
         """The name of the event."""
         return self._name
 
+    @property
+    def coroutine(self) -> bool:
+        return self._coroutine
+
 
 class DiscordEvent(Event[P, Coroutine[Any, Any, None]]):
     """Represents a normal discord.py event and its parameters."""
 
     def __init__(self, name: str) -> None:
-        super().__init__(name)
+        super().__init__(name, True)
 
 
-class EventWidget(Widget[P, NoneT]):
-    """Represents a event widget, consisting of a callback function and the `AmethystEvent` that its subscribed to.
+class EventWidget(WidgetPlugin):
+    def __init__(self) -> None:
+        self.events: Dict[Event, List[Callable]] = {}
 
-    These are not usually created manually, instead they are created using the `amethyst.event` decorator.
-    """
+    def register(self, widget: Widget, plugin: Plugin):
+        event = widget.event
+        _log.debug(
+            "Registering event handler '%s.%s' for '%s'",
+            plugin.name,
+            widget.name,
+            event.name,
+        )
 
-    def __init__(
-        self,
-        callback: Callable[Concatenate[Plugin, P], NoneT],
-        event: Event[P, NoneT],
-    ) -> None:
-        super().__init__(callback)
-        self._event = event
+        if event in self.events:
+            handlers = self.events[event]
+        else:
+            handlers: List[Callable] = []
+            self.events[event] = handlers
+            setattr(
+                self.client,
+                event.name,
+                lambda *a, **k: asyncio.gather(*(h(plugin, *a, **k) for h in handlers))
+                if event.coroutine
+                else lambda *a, **k: (h(plugin, *a, **k) for h in handlers),
+            )
 
-    @property
-    def event(self) -> Event[P, NoneT]:
-        """The event this handler is subscribed to."""
-        return self._event
+        handlers.append(widget.callback)
 
-    def register(self, plugin: Plugin, client: Client) -> None:
-        setattr(client, self.event.name, self.bound(plugin))
+    class Widget(BaseWidget[P, NoneT]):
+        """Represents a event widget, consisting of a callback function and the `AmethystEvent` that its subscribed to.
+
+        These are not usually created manually, instead they are created using the `amethyst.event` decorator.
+        """
+
+        def __init__(
+            self,
+            callback: Callable[Concatenate[Plugin, P], NoneT],
+            event: Event[P, NoneT],
+        ) -> None:
+            super().__init__(callback)
+            self._event = event
+
+        @property
+        def event(self) -> Event[P, NoneT]:
+            """The event this handler is subscribed to."""
+            return self._event
 
 
-event = EventWidget.decorate
+event = EventWidget.Widget.decorate
 """Decorator to designate a regular function to be called when the specified event is invoked.
 
 Parameters

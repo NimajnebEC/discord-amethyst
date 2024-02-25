@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import contextlib
 import logging
-from typing import Any, Dict, Type, TypeVar
+from typing import Any, Dict, List, Type, TypeVar
 
 import discord
 import dynamicpy
 
 from amethyst import error
-from amethyst.abc import Plugin, Widget
+from amethyst.abc import BaseWidget, Plugin
+from amethyst.util import safesubclass
 
 _default_modules = [".command", ".commands", ".plugins", ".plugin"]
 
@@ -30,6 +31,10 @@ class Client(discord.Client):
         self._dependencies = dynamicpy.DependencyLibrary()
         self._module_loader = self._build_module_loader()
         self._plugins: Dict[Type[Plugin], Plugin] = {}
+        self._widgets: List[BaseWidget] = []
+
+    def has_plugin(self, plugin: Type[Plugin]) -> bool:
+        return plugin in self._plugins
 
     def get_plugin(self, plugin: Type[PluginT]) -> PluginT:
         if plugin in self._plugins:
@@ -49,6 +54,7 @@ class Client(discord.Client):
             raise error.DuplicatePluginError(f"{plugin.name} has already been registered.")
         _log.debug("Registering plugin '%s'", plugin.name)
 
+        # * Instantiate Plugin
         try:
             instance = plugin.__new__(plugin)
             setattr(instance, "_client", self)
@@ -58,7 +64,18 @@ class Client(discord.Client):
                 f"Error injecting dependencies into '{plugin.name}'"
             ) from e
 
-        self._load_plugin(instance)
+        # * Load widgets
+        loader = dynamicpy.DynamicLoader()
+
+        @loader.widget_handler(BaseWidget)
+        def _(widget: BaseWidget):
+            if widget not in self._widgets:
+                widget.register(instance, self)
+                self._widgets.append(widget)
+
+        loader.load_object(instance)
+
+        # * Add to plugins list
         self._plugins[plugin] = instance
 
     def add_dependency(self, dependency: Any) -> None:
@@ -80,25 +97,12 @@ class Client(discord.Client):
         """
         self._dependencies.add(dependency)
 
-    def _load_plugin(self, plugin: Plugin) -> None:
-        loader = dynamicpy.DynamicLoader()
-
-        @loader.widget_handler(Widget)
-        def _(widget: Widget):
-            widget.register(plugin, self)
-
-        loader.load_object(plugin)
-
     def _build_module_loader(self) -> dynamicpy.DynamicLoader:
         loader = dynamicpy.DynamicLoader()
 
         @loader.handler()
         def _(_, value: Any):
-            if (
-                isinstance(value, type)
-                and value is not Plugin
-                and issubclass(value, Plugin)
-            ):
+            if value is not Plugin and safesubclass(value, Plugin):
                 with contextlib.suppress(error.DuplicatePluginError):
                     self.register_plugin(value)
 
