@@ -1,4 +1,10 @@
-__all__ = ("AmethystError", "ModuleLocateError", "DuplicatePluginError")
+__all__ = (
+    "PluginDependencyError",
+    "DuplicatePluginError",
+    "RegisterPluginError",
+    "ModuleLocateError",
+    "AmethystError",
+)
 
 
 class AmethystError(Exception):

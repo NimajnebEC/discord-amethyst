@@ -21,9 +21,7 @@ import dynamicpy
 from amethyst import error
 from amethyst.util import classproperty, safesubclass
 
-_default_modules = [".command", ".commands", ".plugins", ".plugin"]
-
-_log = logging.getLogger(__name__)
+__all__ = ("Client", "Plugin", "BaseWidget", "WidgetPlugin")
 
 PluginSelf: TypeAlias = "Self@Plugin"  # type: ignore
 
@@ -31,6 +29,9 @@ WidgetT = TypeVar("WidgetT", bound="BaseWidget[..., Any]")
 PluginT = TypeVar("PluginT", bound="Plugin")
 P = ParamSpec("P")
 T = TypeVar("T")
+
+_default_modules = [".command", ".commands", ".plugins", ".plugin"]
+_log = logging.getLogger(__name__)
 
 
 class Client(discord.Client):
@@ -49,14 +50,50 @@ class Client(discord.Client):
         self._widgets: List[BaseWidget] = []
 
     def has_plugin(self, plugin: Type[Plugin]) -> bool:
+        """Checks if the specified plugin has been registered with this client.
+
+        Parameters
+        ----------
+        plugin : `Type[Plugin]`
+            The plugin to check if its been registered.
+
+        Returns
+        -------
+        bool
+            `True` if the plugin has been registered.
+        """
         return plugin in self._plugins
 
     def get_plugin(self, plugin: Type[PluginT]) -> PluginT:
+        """Gets the registered instance of the specified plugin.
+
+        Parameters
+        ----------
+        plugin : `Type[PluginT]`
+            The plugin to get an instance of.
+
+        Returns
+        -------
+        `PluginT`
+            The registered instance of the specified plugin.
+
+        Raises
+        ------
+        `KeyError`
+            Raised if no such plugin has been registered.
+        """
         if plugin in self._plugins:
             return self._plugins[plugin]  # type: ignore
         raise KeyError(f"Plugin {plugin.name} not registered.")
 
     def load_modules(self, modules: list[str] = _default_modules) -> None:
+        """Load all plugins found in the specified modules.
+
+        Parameters
+        ----------
+        modules : `list[str]`, optional
+            The list of modules to recursively search.
+        """
         _log.debug("Loading modules %s", modules)
         for module in modules:
             if self._instantiating_package is None and module.startswith("."):
@@ -65,6 +102,20 @@ class Client(discord.Client):
                 self._module_loader.load_module(module, self._instantiating_package)
 
     def register_plugin(self, plugin: Type[Plugin]) -> None:
+        """Register the specified plugin and all its widgets.
+
+        Parameters
+        ----------
+        plugin : `Type[Plugin]`
+            The plugin to register.
+
+        Raises
+        ------
+        `DuplicatePluginError`
+            Raised if the plugin has already been registered.
+        `PluginDependencyError`
+            Raised if there was an error while injecting dependencies.
+        """
         if plugin in self._plugins:
             raise error.DuplicatePluginError(f"{plugin.name} has already been registered.")
         _log.debug("Registering plugin '%s'", plugin.name)
@@ -75,7 +126,7 @@ class Client(discord.Client):
             setattr(instance, "_client", self)
             self._dependencies.inject(instance.__init__)
         except (dynamicpy.DependencyNotFoundError, dynamicpy.InjectDependenciesError) as e:
-            raise error.RegisterPluginError(
+            raise error.PluginDependencyError(
                 f"Error injecting dependencies into '{plugin.name}'"
             ) from e
 
@@ -113,11 +164,16 @@ class Client(discord.Client):
         self._dependencies.add(dependency)
 
     def _build_module_loader(self) -> dynamicpy.DynamicLoader:
+        """Build the `DynamicLoader` used for finding plugins in modules."""
         loader = dynamicpy.DynamicLoader()
 
         @loader.handler()
         def _(_, value: Any):
-            if value is not Plugin and safesubclass(value, Plugin):
+            if (
+                value is not Plugin
+                and safesubclass(value, Plugin)
+                and not issubclass(value, WidgetPlugin)
+            ):
                 with contextlib.suppress(error.DuplicatePluginError):
                     self.register_plugin(value)
 
@@ -125,6 +181,7 @@ class Client(discord.Client):
 
     def _get_instantiating_package(self) -> str | None:
         """Return the package the application was instantiated from."""
+
         try:
             module = dynamicpy.get_foreign_module()
 
@@ -149,15 +206,19 @@ class Plugin:
         """The client will attempt to bind constructor parameters to dependencies when registered."""
 
     @property
-    def client(self) -> "Client":
+    def client(self) -> Client:
+        """The instance of `Client` this plugin has been registered to."""
         return getattr(self, "_client") if hasattr(self, "_client") else None  # type: ignore
 
     @classproperty
     def name(cls):
+        """The name of this plugin."""
         return cls.__name__
 
 
 class BaseWidget(dynamicpy.BaseWidget[Callable[Concatenate[PluginSelf, P], T]]):
+    """The base class for all Amethyst widgets to inherit from."""
+
     def bound(self, plugin: Plugin) -> Callable[P, T]:
         """Return a bound copy of the callback function.
 
@@ -173,7 +234,7 @@ class BaseWidget(dynamicpy.BaseWidget[Callable[Concatenate[PluginSelf, P], T]]):
         """
         return lambda *args, **kwargs: self.callback(plugin, *args, **kwargs)  # type: ignore
 
-    def register(self, plugin: Plugin, client: "Client") -> None:
+    def register(self, plugin: Plugin, client: Client) -> None:
         """Register the widget with the provided `Client`.
 
         Parameters
@@ -185,12 +246,20 @@ class BaseWidget(dynamicpy.BaseWidget[Callable[Concatenate[PluginSelf, P], T]]):
         """
         raise NotImplementedError(f"{type(self).__name__} must implement 'register'")
 
+    @classproperty
+    def type(cls) -> str:
+        """The name of the type of widget."""
+        return cls.__name__
+
     @property
     def name(self) -> str:
+        """The name of this widget instance."""
         return self.callback.__name__
 
 
 class _WidgetPluginMeta(type):
+    """Metaclass for injecting plugin registration into widgets."""
+
     def __new__(mcls, name, bases, namespace):
         cls = super().__new__(mcls, name, bases, namespace)
         loader = dynamicpy.DynamicLoader()
@@ -199,7 +268,9 @@ class _WidgetPluginMeta(type):
         return cls
 
     def _inject(cls, _, widget) -> None:
-        def proxy(widget, plugin: Plugin, client: "Client") -> None:
+        """Inject the plugin's registration method into the widget's registration method."""
+
+        def proxy(widget, plugin: Plugin, client: Client) -> None:
             if not client.has_plugin(cls):
                 client.register_plugin(cls)
             widget_plugin = client.get_plugin(cls)  # type: ignore
@@ -209,5 +280,16 @@ class _WidgetPluginMeta(type):
 
 
 class WidgetPlugin(Plugin, metaclass=_WidgetPluginMeta):
+    """Base class for wiget plugins, allowing for the creation of more complex widgets."""
+
     def register(self, widget: BaseWidget, plugin: Plugin):
+        """Register the provided widget with the client.
+
+        Parameters
+        ----------
+        widget : `BaseWidget`
+            The widget to be registered.
+        plugin : `Plugin`
+            The plugin this widget belongs to.
+        """
         raise NotImplementedError(f"{self.name} must implement 'register'")

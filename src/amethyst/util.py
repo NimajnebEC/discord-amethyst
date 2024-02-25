@@ -39,6 +39,8 @@ def _node_is_subset(superset: Any, subset: Any) -> bool:
 
 
 class classproperty:
+    """Decorator to turn a method into a class property."""
+
     def __init__(self, func):
         self.fget = func
 
@@ -47,4 +49,18 @@ class classproperty:
 
 
 def safesubclass(obj: object, cls: type) -> bool:
+    """Combined isinstance and issubclass check.
+
+    Parameters
+    ----------
+    obj : `object`
+        The object to check if is a subclass of `cls`.
+    cls : `type`
+        The class to check if `obj` is a subclass of.
+
+    Returns
+    -------
+    bool
+        `True` if `obj` is a subclass of `cls`.
+    """
     return isinstance(obj, type) and issubclass(obj, cls)

@@ -16,11 +16,11 @@ from typing import (
 
 from amethyst.amethyst import BaseWidget, Plugin, WidgetPlugin
 
+__all__ = ("Event", "DiscordEvent", "EventWidget", "event")
+
 NoneT = TypeVar("NoneT", bound=None | Coroutine[Any, Any, None])
 P = ParamSpec("P")
 T = TypeVar("T")
-
-__all__ = ("Event", "DiscordEvent", "EventWidget", "event")
 
 _log = logging.getLogger(__name__)
 
@@ -47,6 +47,7 @@ class Event(Generic[P, NoneT]):
 
     @property
     def coroutine(self) -> bool:
+        """If this event is a coroutine."""
         return self._coroutine
 
 
