@@ -4,7 +4,7 @@ from typing import List, Sequence
 import discord
 from discord import app_commands
 
-from amethyst.widget.event.widget import DiscordEvent
+from amethyst.widget.event.event import DiscordEvent
 
 __all__ = (
     "on_app_command_completion",

@@ -1,5 +1,5 @@
 from amethyst.widget.event import library
-from amethyst.widget.event.widget import (
+from amethyst.widget.event.event import (
     DiscordEvent,
     Event,
     EventWidget,

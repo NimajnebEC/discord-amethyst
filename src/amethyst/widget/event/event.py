@@ -14,7 +14,7 @@ from typing import (
     TypeVar,
 )
 
-from amethyst.abc import BaseWidget, Plugin, WidgetPlugin
+from amethyst.amethyst import BaseWidget, Plugin, WidgetPlugin
 
 NoneT = TypeVar("NoneT", bound=None | Coroutine[Any, Any, None])
 P = ParamSpec("P")

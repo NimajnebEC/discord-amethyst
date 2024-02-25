@@ -1,5 +1,4 @@
-from amethyst.abc import Plugin
-from amethyst.client import Client
+from amethyst.amethyst import Client, Plugin
 from amethyst.widget.event import Event, event
 from amethyst.widget.event.library import *  # noqa: F403
 
