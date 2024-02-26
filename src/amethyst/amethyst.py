@@ -44,10 +44,16 @@ class Client(discord.Client):
     ) -> None:
         super().__init__(intents=intents, **options)
         self._instantiating_package = self._get_instantiating_package()
+        self._tree = discord.app_commands.CommandTree(self)
         self._dependencies = dynamicpy.DependencyLibrary()
         self._module_loader = self._build_module_loader()
         self._plugins: Dict[Type[Plugin], Plugin] = {}
         self._widgets: List[BaseWidget] = []
+
+    @property
+    def tree(self) -> discord.app_commands.CommandTree:
+        """The command tree responsible for handling the application commands in this bot."""
+        return self._tree
 
     def has_plugin(self, plugin: Type[Plugin]) -> bool:
         """Checks if the specified plugin has been registered with this client.
@@ -163,6 +169,9 @@ class Client(discord.Client):
         """
         self._dependencies.add(dependency)
 
+    async def setup_hook(self) -> None:
+        self.dispatch("setup_hook")  # todo: look into self._listeners
+
     def _build_module_loader(self) -> dynamicpy.DynamicLoader:
         """Build the `DynamicLoader` used for finding plugins in modules."""
         loader = dynamicpy.DynamicLoader()
@@ -272,6 +281,7 @@ class _WidgetPluginMeta(type):
 
         def proxy(widget, plugin: Plugin, client: Client) -> None:
             if not client.has_plugin(cls):
+                # todo: protect against circular widget dependencies
                 client.register_plugin(cls)
             widget_plugin = client.get_plugin(cls)  # type: ignore
             cls.register(widget_plugin, widget, plugin)  # type: ignore
