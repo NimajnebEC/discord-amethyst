@@ -170,7 +170,7 @@ class Client(discord.Client):
         self._dependencies.add(dependency)
 
     async def setup_hook(self) -> None:
-        self.dispatch("setup_hook")  # todo: look into self._listeners
+        self.dispatch("setup_hook")
 
     def _build_module_loader(self) -> dynamicpy.DynamicLoader:
         """Build the `DynamicLoader` used for finding plugins in modules."""
@@ -222,7 +222,7 @@ class Plugin:
     @classproperty
     def name(cls):
         """The name of this plugin."""
-        return cls.__name__
+        return cls.__qualname__
 
 
 class BaseWidget(dynamicpy.BaseWidget[Callable[Concatenate[PluginSelf, P], T]]):
@@ -258,7 +258,7 @@ class BaseWidget(dynamicpy.BaseWidget[Callable[Concatenate[PluginSelf, P], T]]):
     @classproperty
     def type(cls) -> str:
         """The name of the type of widget."""
-        return cls.__name__
+        return cls.__qualname__
 
     @property
     def name(self) -> str:
