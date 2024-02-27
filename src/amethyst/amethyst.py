@@ -263,7 +263,7 @@ class BaseWidget(dynamicpy.BaseWidget[Callable[Concatenate[PluginSelf, P], T]]):
     @property
     def name(self) -> str:
         """The name of this widget instance."""
-        return self.callback.__name__
+        return self.callback.__qualname__
 
 
 class _WidgetPluginMeta(type):

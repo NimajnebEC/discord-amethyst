@@ -64,8 +64,7 @@ class EventWidget(BaseWidget[P, Coro]):
 
     def register(self, plugin: Plugin, client: Client) -> None:
         _log.debug(
-            "Registering event handler '%s.%s' for '%s'",
-            plugin.name,
+            "Registering event handler '%s' for '%s'",
             self.name,
             self.event.name,
         )
@@ -78,22 +77,17 @@ class EventWidget(BaseWidget[P, Coro]):
             listeners = []
             client._listeners[name] = listeners
 
-        async def handler(*args) -> None:
+        async def wrapper(*args) -> None:
             try:
                 await self.callback(plugin, *args)  # type: ignore
             except Exception:
-                _log.error(
-                    "Error handling '%s.%s': ",
-                    plugin.name,
-                    self.name,
-                    exc_info=True,
-                )
+                _log.error("Error handling '%s': ", self.name, exc_info=True)
 
-        def wrapper(*args) -> bool:
-            client.loop.create_task(handler(*args))
+        def handler(*args) -> bool:
+            client.loop.create_task(wrapper(*args))
             return False
 
-        listeners.append((_FutureImpostor(), wrapper))  # type: ignore
+        listeners.append((_FutureImpostor(), handler))  # type: ignore
 
 
 event = EventWidget.decorate

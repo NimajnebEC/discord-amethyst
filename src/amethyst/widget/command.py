@@ -29,10 +29,6 @@ class CommandWidget(BaseWidget[[Interaction], Coroutine[Any, Any, None]]):
         self.nsfw = nsfw
 
     @property
-    def name(self) -> str:
-        return self._name or super().name
-
-    @property
     def description(self) -> str:
         if self._description is not None:
             return self._description
@@ -46,9 +42,9 @@ class CommandWidget(BaseWidget[[Interaction], Coroutine[Any, Any, None]]):
         _log.debug("Registering command '%s'", self.name)
 
         command = Command(
+            name=self._name or self.callback.__name__,
             description=self.description,
             callback=self.callback,
-            name=self.name,
             nsfw=self.nsfw,
         )
 
