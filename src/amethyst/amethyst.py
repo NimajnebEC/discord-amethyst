@@ -3,11 +3,13 @@ from __future__ import annotations
 import contextlib
 import logging
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     Concatenate,
     Dict,
     List,
+    Optional,
     ParamSpec,
     Self,
     Type,
@@ -21,14 +23,17 @@ import dynamicpy
 from amethyst import error
 from amethyst.util import classproperty, safesubclass
 
-__all__ = ("Client", "Plugin", "BaseWidget", "WidgetPlugin")
+if TYPE_CHECKING:
+    from amethyst.widget.event import Event
 
-PluginSelf: TypeAlias = "Self@Plugin"  # type: ignore
+__all__ = ("Client", "Plugin", "BaseWidget", "WidgetPlugin")
 
 WidgetT = TypeVar("WidgetT", bound="BaseWidget[..., Any]")
 PluginT = TypeVar("PluginT", bound="Plugin")
 P = ParamSpec("P")
 T = TypeVar("T")
+
+PluginSelf: TypeAlias = "Self@Plugin"  # type: ignore
 
 _default_modules = [".command", ".commands", ".plugins", ".plugin"]
 _log = logging.getLogger(__name__)
@@ -36,6 +41,8 @@ _log = logging.getLogger(__name__)
 
 class Client(discord.Client):
     """Represents a connection to Discord. This class extends discord.Client and is the primary home of amethyt's additions."""
+
+    ##region Public Methods
 
     def __init__(
         self,
@@ -169,8 +176,26 @@ class Client(discord.Client):
         """
         self._dependencies.add(dependency)
 
+    async def wait_for(
+        self,
+        event: "Event[P]",
+        /,
+        *,
+        check: Optional[Callable[P, bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> None:
+        await super().wait_for(event.name, check=check, timeout=timeout)
+
+    ##endregion
+
+    ##region Events
+
     async def setup_hook(self) -> None:
         self.dispatch("setup_hook")
+
+    ##endregion
+
+    ##region Private Methods
 
     def _build_module_loader(self) -> dynamicpy.DynamicLoader:
         """Build the `DynamicLoader` used for finding plugins in modules."""
@@ -206,6 +231,8 @@ class Client(discord.Client):
             return None
         except ImportError as e:
             raise error.ModuleLocateError("Error locating instantiating package") from e
+
+    ##endregion
 
 
 class Plugin:
