@@ -7,6 +7,7 @@ from typing import (
     Any,
     Callable,
     Concatenate,
+    Coroutine,
     Dict,
     List,
     Optional,
@@ -34,6 +35,7 @@ P = ParamSpec("P")
 T = TypeVar("T")
 
 PluginSelf: TypeAlias = "Self@Plugin"  # type: ignore
+Coro = Coroutine[Any, Any, T]
 
 _default_modules = [".command", ".commands", ".plugins", ".plugin"]
 _log = logging.getLogger(__name__)
@@ -185,6 +187,17 @@ class Client(discord.Client):
         timeout: Optional[float] = None,
     ) -> None:
         await super().wait_for(event.name, check=check, timeout=timeout)
+
+    def event(
+        self, event: "Event[P]"
+    ) -> Callable[[Callable[P, Coro[None]]], Callable[P, Coro[None]]]:
+        def decorator(func: Callable[P, Coro[None]]) -> Callable[P, Coro[None]]:
+            from amethyst.widget.event import EventWidget
+
+            EventWidget(func, event).register(None, self)  # type: ignore
+            return func
+
+        return decorator
 
     ##endregion
 

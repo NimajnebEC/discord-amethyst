@@ -79,11 +79,14 @@ class EventWidget(BaseWidget[P, Coro]):
 
         async def wrapper(*args) -> None:
             try:
-                await self.callback(plugin, *args)  # type: ignore
+                await self.callback(*args)  # type: ignore
             except Exception:
                 _log.error("Error handling '%s': ", self.name, exc_info=True)
 
         def handler(*args) -> bool:
+            if plugin is not None:  # To support anonymous events using Client.event
+                args = (plugin, *args)
+
             client.loop.create_task(wrapper(*args))
             return False
 
