@@ -60,16 +60,16 @@ class ScheduleWidget(BaseWidget[..., Coroutine[Any, Any, None]]):
     def register(self, plugin: Plugin, client: Client) -> None:
         _log.debug("Registering schedule '%s' with '%s'", self.name, self.cron)
 
-        async def looop():
+        async def loop():
             while not client.is_closed():
                 await wait_until(self.next_occurrence())
                 if client.is_ready():
                     _log.debug("Invoking schedule '%s'", self.name)
-                    await self.bound(plugin)()
+                    client.create_task(self.bound(plugin)())
                 else:
                     _log.debug("Skipping schedule '%s' as client is not ready", self.name)
 
-        client.create_task(looop())
+        client.create_task(loop())
 
 
 schedule = ScheduleWidget.decorate
