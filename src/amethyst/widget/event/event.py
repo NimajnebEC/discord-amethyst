@@ -7,7 +7,6 @@ from typing import (
     Concatenate,
     Coroutine,
     Generic,
-    Literal,
     ParamSpec,
     TypeVar,
 )
@@ -62,20 +61,12 @@ class EventWidget(BaseWidget[P, Coro]):
         """The event this handler is subscribed to."""
         return self._event
 
-    def register(self, plugin: Plugin, client: Client) -> None:
+    def register(self, plugin: Plugin | None, client: Client) -> None:
         _log.debug(
             "Registering event handler '%s' for '%s'",
             self.name,
             self.event.name,
         )
-
-        name = self.event.name
-
-        try:
-            listeners = client._listeners[name]
-        except KeyError:
-            listeners = []
-            client._listeners[name] = listeners
 
         async def wrapper(*args) -> None:
             try:
@@ -87,10 +78,10 @@ class EventWidget(BaseWidget[P, Coro]):
             if plugin is not None:  # To support anonymous events using Client.event
                 args = (plugin, *args)
 
-            client.loop.create_task(wrapper(*args))
+            client.create_task(wrapper(*args))
             return False
 
-        listeners.append((_FutureImpostor(), handler))  # type: ignore
+        client.create_task(client.wait_for(self.event, check=handler))  # type: ignore
 
 
 event = EventWidget.decorate
@@ -101,8 +92,3 @@ Parameters
 event: `Event`
     The event to subscribe to.
 """
-
-
-class _FutureImpostor:
-    def cancelled(self) -> Literal[False]:
-        return False

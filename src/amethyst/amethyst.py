@@ -10,7 +10,6 @@ from typing import (
     Coroutine,
     Dict,
     List,
-    Optional,
     ParamSpec,
     Self,
     Type,
@@ -57,6 +56,7 @@ class Client(discord.Client):
         self._dependencies = dynamicpy.DependencyLibrary()
         self._module_loader = self._build_module_loader()
         self._plugins: Dict[Type[Plugin], Plugin] = {}
+        self._tasks: List[Coro[Any]] | None = []
         self._widgets: List[BaseWidget] = []
 
     @property
@@ -183,8 +183,8 @@ class Client(discord.Client):
         event: "Event[P]",
         /,
         *,
-        check: Optional[Callable[P, bool]] = None,
-        timeout: Optional[float] = None,
+        check: Callable[P, bool] | None = None,
+        timeout: float | None = None,
     ) -> None:
         await super().wait_for(event.name, check=check, timeout=timeout)
 
@@ -199,11 +199,23 @@ class Client(discord.Client):
 
         return decorator
 
+    def create_task(self, task: Coro[Any]) -> None:
+        if self._tasks is None:
+            self.loop.create_task(task)
+        else:
+            self._tasks.append(task)
+
     ##endregion
 
     ##region Events
 
     async def setup_hook(self) -> None:
+        # Run pending tasks
+        if self._tasks is not None:
+            for task in self._tasks:
+                self.loop.create_task(task)
+            self._tasks = None
+
         self.dispatch("setup_hook")
 
     ##endregion
