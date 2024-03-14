@@ -68,6 +68,13 @@ class EventWidget(BaseWidget[P, Coro]):
             self.event.name,
         )
 
+        if self.event.name == "setup_hook":
+            if plugin is None:
+                client._setup_hooks.append(self.callback)
+            else:
+                client._setup_hooks.append(self.bound(plugin))
+            return
+
         async def wrapper(*args) -> None:
             try:
                 await self.callback(*args)  # type: ignore

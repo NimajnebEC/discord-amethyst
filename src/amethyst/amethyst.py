@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import contextlib
 import logging
 from typing import (
@@ -52,6 +53,7 @@ class Client(discord.Client):
     ) -> None:
         super().__init__(intents=intents, **options)
         self._instantiating_package = self._get_instantiating_package()
+        self._setup_hooks: List[Callable[..., Coro[None]]] = []
         self._tree = discord.app_commands.CommandTree(self)
         self._dependencies = dynamicpy.DependencyLibrary()
         self._module_loader = self._build_module_loader()
@@ -216,7 +218,8 @@ class Client(discord.Client):
                 self.loop.create_task(task)
             self._tasks = None
 
-        self.dispatch("setup_hook")
+        # ensure that all hooks are run before continuing
+        await asyncio.gather(*(h() for h in self._setup_hooks))
 
     ##endregion
 
