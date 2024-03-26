@@ -29,12 +29,13 @@ if TYPE_CHECKING:
 
 __all__ = ("Client", "Plugin", "BaseWidget", "WidgetPlugin")
 
-WidgetT = TypeVar("WidgetT", bound="BaseWidget[..., Any]")
+WidgetT = TypeVar("WidgetT", bound="BaseWidget[Any]")
 PluginT = TypeVar("PluginT", bound="Plugin")
 P = ParamSpec("P")
 T = TypeVar("T")
 
 PluginSelf: TypeAlias = "Self@Plugin"  # type: ignore
+CallbackT = TypeVar("CallbackT", bound=Callable[Concatenate[PluginSelf, ...], Any])
 Coro = Coroutine[Any, Any, T]
 
 _default_modules = [".command", ".commands", ".plugins", ".plugin"]
@@ -280,10 +281,12 @@ class Plugin:
         return cls.__qualname__
 
 
-class BaseWidget(dynamicpy.BaseWidget[Callable[Concatenate[PluginSelf, P], T]]):
+class BaseWidget(dynamicpy.BaseWidget[CallbackT]):
     """The base class for all Amethyst widgets to inherit from."""
 
-    def bound(self, plugin: Plugin) -> Callable[P, T]:
+    def bound(
+        self: BaseWidget[Callable[Concatenate[PluginSelf, P], T]], plugin: Plugin
+    ) -> Callable[P, T]:
         """Return a bound copy of the callback function.
 
         Parameters

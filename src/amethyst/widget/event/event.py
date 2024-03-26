@@ -11,13 +11,15 @@ from typing import (
     TypeVar,
 )
 
-from amethyst.amethyst import BaseWidget, Client, Plugin
+from amethyst.amethyst import BaseWidget, Client, Plugin, PluginSelf
 
 __all__ = ("Event", "EventWidget", "event")
 
-Coro = Coroutine[Any, Any, None]
 P = ParamSpec("P")
 T = TypeVar("T")
+
+Coro = Coroutine[Any, Any, None]
+Callback = Callable[Concatenate[PluginSelf, P], Coro]
 
 _log = logging.getLogger(__name__)
 
@@ -42,17 +44,13 @@ class Event(Generic[P]):
         return self._name
 
 
-class EventWidget(BaseWidget[P, Coro]):
+class EventWidget(BaseWidget[Callback[P]]):
     """Represents a event widget, consisting of a callback function and the `AmethystEvent` that its subscribed to.
 
     These are not usually created manually, instead they are created using the `amethyst.event` decorator.
     """
 
-    def __init__(
-        self,
-        callback: Callable[Concatenate[Plugin, P], Coro],
-        event: Event[P],
-    ) -> None:
+    def __init__(self, callback: Callback[P], event: Event[P]) -> None:
         super().__init__(callback)
         self._event = event
 

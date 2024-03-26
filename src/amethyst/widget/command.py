@@ -1,16 +1,19 @@
 import logging
-from typing import Any, Callable, Coroutine, Optional
+from typing import Any, Callable, Concatenate, Coroutine, Optional, ParamSpec
 
 from discord import Interaction
 from discord.app_commands import Command
 from discord.utils import _shorten
 
-from amethyst.amethyst import BaseWidget, Client, Plugin
+from amethyst.amethyst import BaseWidget, Client, Plugin, PluginSelf
+
+P = ParamSpec("P")
+Callback = Callable[Concatenate[PluginSelf, Interaction, P], Coroutine[Any, Any, None]]
 
 _log = logging.getLogger(__name__)
 
 
-class CommandWidget(BaseWidget[[Interaction], Coroutine[Any, Any, None]]):
+class CommandWidget(BaseWidget[Callback[P]]):
     """Represents an Amethyst command.
 
     These are not usually created manually, instead they are created using the `amethyst.command` decorator.
@@ -18,12 +21,12 @@ class CommandWidget(BaseWidget[[Interaction], Coroutine[Any, Any, None]]):
 
     def __init__(
         self,
-        callback: Callable[[Any, Interaction], Coroutine[Any, Any, None]],
+        callback: Callback,
         name: Optional[str] = None,
         description: Optional[str] = None,
         nsfw: bool = False,
     ) -> None:
-        super().__init__(callback)
+        super().__init__(callback)  # type: ignore
         self._description = description
         self._name = name
         self.nsfw = nsfw
@@ -68,4 +71,4 @@ nsfw : `bool`, optional
     Whether the command is NSFW and should only work in NSFW channels. Defaults to `False`.
 
     Due to a Discord limitation, this does not work on subcommands.
-    """
+"""

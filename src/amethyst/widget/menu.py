@@ -4,17 +4,18 @@ from typing import Any, Callable, Coroutine, Optional, TypeVar, Union
 
 from discord import Interaction, Member, Message, User, app_commands
 
-from amethyst.amethyst import BaseWidget, Client, Plugin
+from amethyst.amethyst import BaseWidget, Client, Plugin, PluginSelf
 
 SubjectT = TypeVar("SubjectT", Message, User, Member, Union[User, Member])
+Callback = Callable[[PluginSelf, Interaction, SubjectT], Coroutine[Any, Any, None]]
 
 _log = logging.getLogger(__name__)
 
 
-class ContextMenuWidget(BaseWidget[[Interaction, SubjectT], Coroutine[Any, Any, None]]):
+class ContextMenuWidget(BaseWidget[Callback[SubjectT]]):
     def __init__(
         self,
-        callback: Callable[[Any, Interaction, SubjectT], Coroutine[Any, Any, None]],
+        callback: Callback,
         name: Optional[str] = None,
         nsfw: bool = False,
     ) -> None:
@@ -35,7 +36,7 @@ class ContextMenuWidget(BaseWidget[[Interaction, SubjectT], Coroutine[Any, Any, 
 
         *_, subject = params.values()
         if subject.annotation is subject.empty:
-            raise ValueError("Third parameter of context menus must be explicityly typed.")
+            raise ValueError("Third parameter of context menus must be explicitly typed.")
 
         bound.__annotations__["subject"] = subject.annotation
 

@@ -7,7 +7,9 @@ from typing import Any, Callable, Coroutine
 
 from croniter import CroniterBadCronError, croniter
 
-from amethyst.amethyst import BaseWidget, Client, Plugin
+from amethyst.amethyst import BaseWidget, Client, Plugin, PluginSelf
+
+Callback = Callable[[PluginSelf], Coroutine[Any, Any, None]]
 
 _min_step = 30
 
@@ -23,17 +25,13 @@ async def wait_until(when: datetime):
     await asyncio.sleep(delay)
 
 
-class ScheduleWidget(BaseWidget[..., Coroutine[Any, Any, None]]):
+class ScheduleWidget(BaseWidget[Callback]):
     """Represents an asynchronous function that should be called on a schedule.
 
     These are not usually created manually, instead they are created using the `amethyst.schedule` decorator.
     """
 
-    def __init__(
-        self,
-        callback: Callable[..., Coroutine[Any, Any, None]],
-        cron: str,
-    ) -> None:
+    def __init__(self, callback: Callback, cron: str) -> None:
         super().__init__(callback)
         try:  # validate cron expression
             croniter(cron)
