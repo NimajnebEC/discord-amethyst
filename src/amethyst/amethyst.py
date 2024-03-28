@@ -22,7 +22,7 @@ import discord
 import dynamicpy
 
 from amethyst import error
-from amethyst.util import classproperty, safesubclass
+from amethyst.util import classproperty, is_dict_subset, safesubclass
 
 if TYPE_CHECKING:
     from amethyst.widget.event import Event
@@ -207,6 +207,53 @@ class Client(discord.Client):
             self.loop.create_task(task)
         else:
             self._tasks.append(task)
+
+    async def tree_changed(self, guild: discord.abc.Snowflake | None) -> bool:
+        remotes = await self.tree.fetch_commands(guild=guild)
+        locals = self.tree.get_commands(guild=guild)
+
+        if len(remotes) != len(locals):
+            return True
+
+        for local in locals:
+            subset = local.to_dict()
+            remote = discord.utils.get(
+                remotes,
+                name=local.name,
+                type=discord.AppCommandType(subset["type"]),
+            )
+
+            if remote is None:
+                return True
+
+            superset = {
+                "default_member_permissions": None
+                if remote.default_member_permissions is None
+                else remote.default_member_permissions.value,
+                "dm_permission": remote.dm_permission,
+                "nsfw": remote.nsfw,
+                **remote.to_dict(),
+            }
+
+            # USER and MESSAGE commands have an empty string for their description
+            # https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-structure
+            if subset["type"] in (
+                discord.AppCommandType.message,
+                discord.AppCommandType.user,
+            ):
+                subset["description"] = ""
+
+            if not is_dict_subset(superset, subset):
+                return True
+
+        return False
+
+    async def refresh_tree(self, guild: discord.abc.Snowflake | None) -> None:
+        if await self.tree_changed(guild):
+            _log.info("Synchronising application tree...")
+            await self.tree.sync(guild=guild)
+        else:
+            _log.debug("Skipping tree synchronisation - already up to date.")
 
     ##endregion
 

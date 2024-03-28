@@ -27,14 +27,14 @@ def _node_is_subset(superset: Any, subset: Any) -> bool:
     if isinstance(superset, dict) and isinstance(subset, dict):
         # Ensure that all items in the subset are present in the superset
         return all(
-            (k in superset and _node_is_subset(superset[k], v) for k, v in subset.items())
+            k in superset and _node_is_subset(superset[k], v) for k, v in subset.items()
         )
 
     if isinstance(superset, list) and isinstance(subset, list):
-        # Ensure that all items in the subset are present in the superset, no matter the order
-        # Explaination:
-        #   For each item in the subset, check if any items in the superset match
-        return all((any((_node_is_subset(x, y) for x in superset)) for y in subset))
+        # Ensure that the list contains items that are subsets of the supersets items
+        return len(superset) == len(subset) and all(
+            _node_is_subset(superset[i], y) for i, y in enumerate(subset)
+        )
     return superset == subset
 
 
