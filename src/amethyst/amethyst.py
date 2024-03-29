@@ -9,8 +9,6 @@ from typing import (
     Callable,
     Concatenate,
     Coroutine,
-    Dict,
-    List,
     ParamSpec,
     Self,
     Type,
@@ -20,6 +18,9 @@ from typing import (
 
 import discord
 import dynamicpy
+import environ
+import envnull
+import lavender
 
 from amethyst import error
 from amethyst.util import classproperty, is_dict_subset, safesubclass
@@ -54,13 +55,16 @@ class Client(discord.Client):
     ) -> None:
         super().__init__(intents=intents, **options)
         self._instantiating_package = self._get_instantiating_package()
-        self._setup_hooks: List[Callable[..., Coro[None]]] = []
+        self._setup_hooks: list[Callable[..., Coro[None]]] = []
         self._tree = discord.app_commands.CommandTree(self)
         self._dependencies = dynamicpy.DependencyLibrary()
         self._module_loader = self._build_module_loader()
-        self._plugins: Dict[Type[Plugin], Plugin] = {}
-        self._tasks: List[Coro[Any]] | None = []
-        self._widgets: List[BaseWidget] = []
+        self._plugins: dict[Type[Plugin], Plugin] = {}
+        self._tasks: list[Coro[Any]] | None = []
+        self._widgets: list[BaseWidget] = []
+        self.guild: int | None = (
+            int(envnull.AMETHYST_GUILD) if envnull.AMETHYST_GUILD else None
+        )
 
     @property
     def tree(self) -> discord.app_commands.CommandTree:
@@ -104,8 +108,8 @@ class Client(discord.Client):
             return self._plugins[plugin]  # type: ignore
         raise KeyError(f"Plugin {plugin.name} not registered.")
 
-    def load_modules(self, modules: list[str] = _default_modules) -> None:
-        """Load all plugins found in the specified modules.
+    def load_plugins(self, modules: list[str] = _default_modules) -> None:
+        """Load all plugins found in the specified modules and their submodules.
 
         Parameters
         ----------
@@ -208,7 +212,7 @@ class Client(discord.Client):
         else:
             self._tasks.append(task)
 
-    async def tree_changed(self, guild: discord.abc.Snowflake | None) -> bool:
+    async def tree_changed(self, guild: discord.abc.Snowflake | None = None) -> bool:
         remotes = await self.tree.fetch_commands(guild=guild)
         locals = self.tree.get_commands(guild=guild)
 
@@ -248,26 +252,62 @@ class Client(discord.Client):
 
         return False
 
-    async def refresh_tree(self, guild: discord.abc.Snowflake | None) -> None:
+    async def refresh_tree(self, guild: discord.abc.Snowflake | None = None) -> None:
         if await self.tree_changed(guild):
             _log.info("Synchronising application tree...")
             await self.tree.sync(guild=guild)
         else:
             _log.debug("Skipping tree synchronisation - already up to date.")
 
+    def run(
+        self,
+        *,
+        reconnect: bool = True,
+        token: str | None = None,
+        guild: int | None = None,
+        log_level: int = logging.INFO,
+        log_filters: dict[str, int] = {},
+        plugin_modules: list[str] = _default_modules,
+    ) -> None:
+        self.guild = guild or self.guild
+        lavender.setup(level=log_level, filter_config=log_filters)
+        self.load_plugins(plugin_modules)
+        return super().run(
+            token or environ.AMETHYST_BOT_TOKEN,
+            reconnect=reconnect,
+            log_handler=None,
+        )
+
     ##endregion
 
     ##region Events
 
     async def setup_hook(self) -> None:
+        # ensure that all hooks are run before continuing
+        await asyncio.gather(*(h() for h in self._setup_hooks))
+
+        if envnull.AMETHYST_AUTO_SYNC is not None:
+            guild = None
+            if self.guild is not None:
+                guild = discord.Object(self.guild)
+                self.tree.copy_global_to(guild=guild)
+            await self.refresh_tree(guild)
+
         # Run pending tasks
         if self._tasks is not None:
             for task in self._tasks:
                 self.loop.create_task(task)
             self._tasks = None
 
-        # ensure that all hooks are run before continuing
-        await asyncio.gather(*(h() for h in self._setup_hooks))
+    async def on_ready(self) -> None:
+        if self.user is None:
+            raise AttributeError("Expected client to be logged in.")
+        name = self.user.global_name or f"{self.user.name}#{self.user.discriminator}"
+        _log.info(
+            "Client connected as '%s' with %sms ping.",
+            name,
+            round(self.latency * 1000),
+        )
 
     ##endregion
 
