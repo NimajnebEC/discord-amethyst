@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import asyncio
+import itertools
 import logging
 from datetime import datetime
-from typing import Any, Callable, Coroutine
+from typing import Any, Callable, Coroutine, Iterator
 
 from croniter import CroniterBadCronError, croniter
 
@@ -44,23 +45,24 @@ class ScheduleWidget(BaseWidget[Callback]):
         """The cron expression for this schedule."""
         return self._cron
 
-    def next_occurrence(self) -> datetime:
-        """Gets the next occurrence of this schedule.
+    def get_iter(self) -> Iterator[datetime]:
+        """Gets an iterable of datetimes this schedule should be invoked at starting from now.
 
         Returns
         -------
-        `datetime`
-            The `datetime` representing when this schedule should next be called.
+        `Iterator[datetime]`
+            And iterable of when this schedule should be invoked.
         """
         iter = croniter(self.cron, datetime.now())
-        return iter.get_next(datetime)
+        return (iter.get_next(datetime) for _ in itertools.count())
 
     def register(self, plugin: Plugin, client: Client) -> None:
         _log.debug("Registering schedule '%s' with '%s'", self.name, self.cron)
 
         async def loop():
+            iter = self.get_iter()
             while not client.is_closed():
-                await wait_until(self.next_occurrence())
+                await wait_until(next(iter))
                 if client.is_ready():
                     _log.debug("Invoking schedule '%s'", self.name)
                     client.create_task(self.bound(plugin)())
