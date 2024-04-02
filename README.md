@@ -114,7 +114,7 @@ Amethyst uses [python-dotenv](https://pypi.org/project/python-dotenv/) to load `
 ## Roadmap
 
 - [x] Multiple widgets defined from the same callable
-- [ ] Logging configuration
+- [x] Logging configuration
 - [x] Context Menus
 - [ ] Hybrid Commands
 - [ ] Plugins enable/disable after initialisation

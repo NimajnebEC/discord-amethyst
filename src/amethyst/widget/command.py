@@ -52,6 +52,7 @@ class CommandWidget(BaseWidget[Callback[P]]):
         )
 
         command.binding = plugin
+        command.add_check(lambda i: plugin.client.guild_allowed(i.guild))
         client.tree.add_command(command)
 
 

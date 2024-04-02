@@ -65,7 +65,7 @@ class ScheduleWidget(BaseWidget[Callback]):
                 await wait_until(next(iter))
                 if client.is_ready():
                     _log.debug("Invoking schedule '%s'", self.name)
-                    client.create_task(self.bound(plugin)())
+                    client.create_task(self.callback(plugin))
                 else:
                     _log.debug("Skipping schedule '%s' as client is not ready", self.name)
 

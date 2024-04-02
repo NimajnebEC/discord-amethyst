@@ -92,7 +92,7 @@ __all__ = (
 
 on_raw_app_command_permissions_update: Event[
     discord.RawAppCommandPermissionsUpdateEvent
-] = Event("raw_app_command_permissions_update")
+] = Event("raw_app_command_permissions_update", lambda x: x.guild)
 """Called when application command permissions are updated.
 
 Parameters
@@ -103,7 +103,7 @@ payload: RawAppCommandPermissionsUpdateEvent
 
 on_app_command_completion: Event[
     [discord.Interaction, app_commands.Command | app_commands.ContextMenu]
-] = Event("app_command_completion")
+] = Event("app_command_completion", lambda x, _: x.guild)
 """Called when a app_commands.Command or app_commands.ContextMenu has successfully completed without error.
 
 Parameters
@@ -114,7 +114,9 @@ command: Union[app_commands.Command, app_commands.ContextMenu]
     The command that completed successfully
 """
 
-on_automod_rule_create: Event[discord.AutoModRule] = Event("on_automod_rule_create")
+on_automod_rule_create: Event[discord.AutoModRule] = Event(
+    "on_automod_rule_create", lambda x: x.guild
+)
 """Called when a AutoModRule is created. You must have manage_guild to receive this.
 
 This requires Intents.auto_moderation_configuration to be enabled.
@@ -125,7 +127,9 @@ rule: AutoModRule
     The rule that was created.
 """
 
-on_automod_rule_update: Event[discord.AutoModRule] = Event("on_automod_rule_update")
+on_automod_rule_update: Event[discord.AutoModRule] = Event(
+    "on_automod_rule_update", lambda x: x.guild
+)
 """Called when a AutoModRule is updated. You must have manage_guild to receive this.
 
 This requires Intents.auto_moderation_configuration to be enabled.
@@ -136,7 +140,9 @@ rule: AutoModRule
     The rule that was updated.
 """
 
-on_automod_rule_delete: Event[discord.AutoModRule] = Event("on_automod_rule_delete")
+on_automod_rule_delete: Event[discord.AutoModRule] = Event(
+    "on_automod_rule_delete", lambda x: x.guild
+)
 """Called when a AutoModRule is deleted. You must have manage_guild to receive this.
 
 This requires Intents.auto_moderation_configuration to be enabled.
@@ -147,7 +153,7 @@ rule: AutoModRule
     The rule that was deleted.
 """
 
-on_automod_action: Event[discord.AutoModAction] = Event("automod_action")
+on_automod_action: Event[discord.AutoModAction] = Event("automod_action", lambda x: x.guild)
 """Called when a AutoModAction is created/performed. You must have manage_guild to receive this.
 
 This requires Intents.auto_moderation_execution to be enabled.
@@ -158,7 +164,9 @@ execution: AutoModAction
     The rule execution that was performed.
 """
 
-on_guild_channel_delete: Event[discord.abc.GuildChannel] = Event("on_guild_channel_delete")
+on_guild_channel_delete: Event[discord.abc.GuildChannel] = Event(
+    "on_guild_channel_delete", lambda x: x.guild
+)
 """Called whenever a guild channel is deleted.
 
 This requires Intents.guilds to be enabled.
@@ -169,7 +177,9 @@ channel: abc.GuildChannel
     The guild channel that got deleted.
 """
 
-on_guild_channel_create: Event[discord.abc.GuildChannel] = Event("on_guild_channel_create")
+on_guild_channel_create: Event[discord.abc.GuildChannel] = Event(
+    "on_guild_channel_create", lambda x: x.guild
+)
 """Called whenever a guild channel is created.
 
 This requires Intents.guilds to be enabled.
@@ -182,7 +192,7 @@ channel: abc.GuildChannel
 
 on_guild_channel_update: Event[
     [discord.abc.GuildChannel, discord.abc.GuildChannel]
-] = Event("guild_channel_update")
+] = Event("guild_channel_update", lambda x, _: x.guild)
 """Called whenever a guild channel is updated. e.g. changed name, topic, permissions.
 
 This requires Intents.guilds to be enabled.
@@ -197,7 +207,7 @@ after: abc.GuildChannel
 
 on_guild_channel_pins_update: Event[
     [discord.abc.GuildChannel | discord.Thread, datetime.datetime]
-] = Event("guild_channel_pins_update")
+] = Event("guild_channel_pins_update", lambda x, _: x.guild)
 """Called whenever a message is pinned or unpinned from a guild channel.
 
 This requires Intents.guilds to be enabled.
@@ -239,7 +249,7 @@ last_pin: Optional[datetime.datetime]
 """
 
 
-on_raw_typing: Event[discord.RawTypingEvent] = Event("raw_typing")
+on_raw_typing: Event[discord.RawTypingEvent] = Event("raw_typing", lambda x: x.guild_id)
 """Called when someone begins typing a message. Unlike on_typing() this is called regardless of the channel and user being in the internal cache.
 
 This requires Intents.typing to be enabled.
@@ -325,7 +335,7 @@ this includes things like wait_for() and wait_until_ready().
 on_resumed: Event[[]] = Event("resumed")
 """Called when the client has resumed a session."""
 
-on_guild_available: Event[discord.Guild] = Event("guild_available")
+on_guild_available: Event[discord.Guild] = Event("guild_available", lambda x: x)
 """Called when a guild becomes available. The guild must have existed in the Client.guilds cache.
 
 This requires Intents.guilds to be enabled.
@@ -336,7 +346,7 @@ guild: Guild
     The Guild that has changed availability.
 """
 
-on_guild_join: Event[discord.Guild] = Event("guild_join")
+on_guild_join: Event[discord.Guild] = Event("guild_join", lambda x: x)
 """Called when a Guild is either created by the Client or when the Client joins a guild.
 
 This requires Intents.guilds to be enabled.
@@ -347,7 +357,7 @@ guild: Guild
     The guild that was joined.
 """
 
-on_guild_remove: Event[discord.Guild] = Event("guild_remove")
+on_guild_remove: Event[discord.Guild] = Event("guild_remove", lambda x: x)
 """Called when a Guild is removed from the Client.
 
 This happens through, but not limited to, these circumstances:
@@ -366,7 +376,9 @@ guild: Guild
     The guild that got removed.
 """
 
-on_guild_update: Event[discord.Guild, discord.Guild] = Event("on_guild_update")
+on_guild_update: Event[discord.Guild, discord.Guild] = Event(
+    "on_guild_update", lambda x, _: x
+)
 """Called when a Guild updates, for example:
 - Changed name
 - Changed AFK channel
@@ -385,7 +397,7 @@ after: Guild
 
 on_guild_emojis_update: Event[
     discord.Guild, Sequence[discord.Emoji], Sequence[discord.Emoji]
-] = Event("guild_emojis_update")
+] = Event("guild_emojis_update", lambda *s: next(x for xs in s for x in xs).guild)
 """Called when a Guild adds or removes Emoji.
 
 This requires Intents.emojis_and_stickers to be enabled.
@@ -402,7 +414,7 @@ after: Sequence[Emoji]
 
 on_guild_stickers_update: Event[
     [discord.Guild, Sequence[discord.GuildSticker], Sequence[discord.GuildSticker]]
-] = Event("guild_stickers_update")
+] = Event("guild_stickers_update", lambda *s: next(x for xs in s for x in xs).guild)
 """Called when a Guild updates its stickers.
 
 This requires Intents.emojis_and_stickers to be enabled.
@@ -417,7 +429,9 @@ after: Sequence[GuildSticker]
     A list of stickers after the update.
 """
 
-on_audit_log_entry_create: Event[discord.AuditLogEntry] = Event("on_audit_log_entry_create")
+on_audit_log_entry_create: Event[discord.AuditLogEntry] = Event(
+    "on_audit_log_entry_create", lambda x: x.guild
+)
 """Called when a Guild gets a new audit log entry. You must have view_audit_log to receive this.
 
 This requires Intents.moderation to be enabled.
@@ -436,7 +450,7 @@ entry: AuditLogEntry
     The audit log entry that was created.
 """
 
-on_invite_create: Event[discord.Invite] = Event("invite_create")
+on_invite_create: Event[discord.Invite] = Event("invite_create", lambda x: x.guild)
 """Called when an Invite is created. You must have manage_channels to receive this.
 
 There is a rare possibility that the Invite.guild and Invite.channel attributes will be of Object rather than the respective models.
@@ -449,7 +463,7 @@ invite: Invite
     The invite that was created.
 """
 
-on_invite_delete: Event[discord.Invite] = Event("invite_delete")
+on_invite_delete: Event[discord.Invite] = Event("invite_delete", lambda x: x.guild)
 """Called when an Invite is deleted. You must have manage_channels to receive this.
 
 There is a rare possibility that the Invite.guild and Invite.channel attributes will be of Object rather than the respective models.
@@ -463,7 +477,9 @@ invite: Invite
     The invite that was deleted.
 """
 
-on_integration_create: Event[discord.Integration] = Event("on_integration_create")
+on_integration_create: Event[discord.Integration] = Event(
+    "on_integration_create", lambda x: x.guild
+)
 """Called when an integration is created.
 
 This requires Intents.integrations to be enabled.
@@ -474,7 +490,9 @@ integration: Integration
     The integration that was created.
 """
 
-on_integration_update: Event[discord.Integration] = Event("on_integration_update")
+on_integration_update: Event[discord.Integration] = Event(
+    "on_integration_update", lambda x: x.guild
+)
 """Called when an integration is updated.
 
 This requires Intents.integrations to be enabled.
@@ -485,7 +503,9 @@ integration: Integration
     The integration that was updated.
 """
 
-on_guild_integrations_update: Event[discord.Guild] = Event("on_guild_integrations_update")
+on_guild_integrations_update: Event[discord.Guild] = Event(
+    "on_guild_integrations_update", lambda x: x
+)
 """Called whenever an integration is created, modified, or removed from a guild.
 
 This requires Intents.integrations to be enabled.
@@ -496,7 +516,9 @@ guild: Guild
     The guild that had its integrations updated.
 """
 
-on_webhooks_update: Event[discord.abc.GuildChannel] = Event("on_webhooks_update")
+on_webhooks_update: Event[discord.abc.GuildChannel] = Event(
+    "on_webhooks_update", lambda x: x.guild
+)
 """Called whenever a webhook is created, modified, or removed from a guild channel.
 
 This requires Intents.webhooks to be enabled.
@@ -508,7 +530,7 @@ channel: abc.GuildChannel
 """
 
 on_raw_integration_delete: Event[discord.RawIntegrationDeleteEvent] = Event(
-    "on_raw_integration_delete"
+    "on_raw_integration_delete", lambda x: x.guild_id
 )
 """Called when an integration is deleted.
 
@@ -520,7 +542,7 @@ payload: RawIntegrationDeleteEvent
     The raw event payload data.
 """
 
-on_interaction: Event[discord.Interaction] = Event("interaction")
+on_interaction: Event[discord.Interaction] = Event("interaction", lambda x: x.guild)
 """Called when an interaction happened.
 
 This currently happens due to slash command invocations or components being used.
@@ -536,7 +558,7 @@ interaction: Interaction
     The interaction data.
 """
 
-on_member_join: Event[discord.Member] = Event("member_join")
+on_member_join: Event[discord.Member] = Event("member_join", lambda x: x.guild)
 """Called when a Member joins a Guild.
 
 This requires Intents.members to be enabled.
@@ -547,7 +569,7 @@ member: Member
     The member who joined.
 """
 
-on_member_remove: Event[discord.Member] = Event("member_remove")
+on_member_remove: Event[discord.Member] = Event("member_remove", lambda x: x.guild)
 """Called when a Member leaves a Guild.
 
 If the guild or member could not be found in the internal cache, this event will not be called. You may use on_raw_member_remove() instead.
@@ -560,7 +582,9 @@ member: Member
     The member who left.
 """
 
-on_raw_member_remove: Event[discord.RawMemberRemoveEvent] = Event("on_raw_member_remove")
+on_raw_member_remove: Event[discord.RawMemberRemoveEvent] = Event(
+    "on_raw_member_remove", lambda x: x.guild_id
+)
 """Called when a Member leaves a Guild.
 
 Unlike on_member_remove(), this is called regardless of the guild or member being in the internal cache.
@@ -573,7 +597,9 @@ payload: RawMemberRemoveEvent
     The raw event payload data.
 """
 
-on_member_update: Event[discord.Member, discord.Member] = Event("on_member_update")
+on_member_update: Event[discord.Member, discord.Member] = Event(
+    "on_member_update", lambda x, _: x.guild
+)
 """Called when a Member updates their profile.
 
 This is called when one or more of the following things change:
@@ -616,7 +642,9 @@ after: User
     The updated user's updated info.
 """
 
-on_member_ban: Event[discord.Guild, discord.User | discord.Member] = Event("on_member_ban")
+on_member_ban: Event[discord.Guild, discord.User | discord.Member] = Event(
+    "on_member_ban", lambda x, _: x
+)
 """Called when a user gets banned from a Guild.
 
 This requires Intents.moderation to be enabled.
@@ -629,7 +657,7 @@ user: User | Member
     The user that got banned. Can be either User or Member depending on whether the user was in the guild or not at the time of removal.
 """
 
-on_member_unban: Event[discord.Guild, discord.User] = Event("member_unban")
+on_member_unban: Event[discord.Guild, discord.User] = Event("member_unban", lambda x, _: x)
 """Called when a User gets unbanned from a Guild.
 
 This requires Intents.moderation to be enabled.
@@ -642,7 +670,9 @@ user: User
     The user that got unbanned.
 """
 
-on_presence_update: Event[discord.Member, discord.Member] = Event("on_presence_update")
+on_presence_update: Event[discord.Member, discord.Member] = Event(
+    "on_presence_update", lambda x, _: x.guild
+)
 """Called when a Member updates their presence.
 
 This is called when one or more of the following things change:
@@ -659,7 +689,7 @@ after: Member
     The updated member's updated info.
 """
 
-on_message: Event[discord.Message] = Event("message")
+on_message: Event[discord.Message] = Event("message", lambda x: x.guild)
 """Called when a Message is created and sent.
 
 This requires Intents.messages to be enabled.
@@ -676,7 +706,9 @@ message: Message
     The current message.
 """
 
-on_message_edit: Event[discord.Message, discord.Message] = Event("on_message_edit")
+on_message_edit: Event[discord.Message, discord.Message] = Event(
+    "on_message_edit", lambda x, _: x.guild
+)
 """Called when a Message receives an update event.
 If the message is not found in the internal message cache, then these events will not be called.
 Messages might not be in the cache if the message is too old or the client is participating in high traffic guilds.
@@ -700,7 +732,7 @@ after: Message
     The current version of the message.
 """
 
-on_message_delete: Event[discord.Message] = Event("message_delete")
+on_message_delete: Event[discord.Message] = Event("message_delete", lambda x: x.guild)
 """Called when a message is deleted. If the message is not found in the internal message cache, then this event will not be called.
 Messages might not be in the cache if the message is too old or the client is participating in high traffic guilds.
 
@@ -714,7 +746,9 @@ message: Message
     The deleted message.
 """
 
-on_bulk_message_delete: Event[List[discord.Message]] = Event("on_bulk_message_delete")
+on_bulk_message_delete: Event[List[discord.Message]] = Event(
+    "on_bulk_message_delete", lambda x: x[0].guild
+)
 """Called when messages are bulk deleted.
 If none of the messages deleted are found in the internal message cache, then this event will not be called.
 If individual messages were not found in the internal message cache, this event will still be called, but the messages not found will not be included in the messages list.
@@ -730,7 +764,9 @@ messages: List[Message]
     The messages that have been deleted.
 """
 
-on_raw_message_edit: Event[discord.RawMessageUpdateEvent] = Event("on_raw_message_edit")
+on_raw_message_edit: Event[discord.RawMessageUpdateEvent] = Event(
+    "on_raw_message_edit", lambda x: x.guild_id
+)
 """Called when a message is edited. Unlike on_message_edit(), this is called regardless of the state of the internal message cache.
 
 If the message is found in the message cache, it can be accessed via RawMessageUpdateEvent.cached_message.
@@ -752,7 +788,9 @@ payload: RawMessageUpdateEvent
     The raw event payload data.
 """
 
-on_raw_message_delete: Event[discord.RawMessageDeleteEvent] = Event("on_raw_message_delete")
+on_raw_message_delete: Event[discord.RawMessageDeleteEvent] = Event(
+    "on_raw_message_delete", lambda x: x.guild_id
+)
 """Called when a message is deleted. Unlike on_message_delete(), this is called regardless of the message being in the internal message cache or not.
 
 If the message is found in the message cache, it can be accessed via RawMessageDeleteEvent.cached_message.
@@ -766,7 +804,7 @@ payload: RawMessageDeleteEvent
 """
 
 on_raw_bulk_message_delete: Event[discord.RawBulkMessageDeleteEvent] = Event(
-    "on_raw_bulk_message_delete"
+    "on_raw_bulk_message_delete", lambda x: x.guild_id
 )
 """Called when a bulk delete is triggered. Unlike on_bulk_message_delete(), this is called regardless of the messages being in the internal message cache or not.
 
@@ -781,7 +819,7 @@ payload: RawBulkMessageDeleteEvent
 """
 
 on_reaction_add: Event[discord.Reaction, discord.Member | discord.User] = Event(
-    "reaction_add"
+    "reaction_add", lambda x, _: x.message.guild
 )
 """Called when a message has a reaction added to it. Similar to on_message_edit(), if the message is not found in the internal message cache,
 then this event will not be called. Consider using on_raw_reaction_add() instead.
@@ -802,7 +840,7 @@ user: Member | User
 """
 
 on_reaction_remove: Event[discord.Reaction, discord.Member | discord.User] = Event(
-    "reaction_remove"
+    "reaction_remove", lambda x, _: x.message.guild
 )
 """Called when a message has a reaction removed from it. Similar to on_message_edit,
 if the message is not found in the internal message cache, then this event will not be called.
@@ -822,7 +860,7 @@ user: Member | User
 """
 
 on_reaction_clear: Event[discord.Message, List[discord.Reaction]] = Event(
-    "on_reaction_clear"
+    "on_reaction_clear", lambda x, _: x.guild
 )
 """Called when a message has all its reactions removed from it.
 Similar to on_message_edit(), if the message is not found in the internal message cache,then this event will not be called. Consider using on_raw_reaction_clear() instead.
@@ -837,7 +875,9 @@ reactions: List[Reaction]
     The reactions that were removed.
 """
 
-on_reaction_clear_emoji: Event[discord.Reaction] = Event("on_reaction_clear_emoji")
+on_reaction_clear_emoji: Event[discord.Reaction] = Event(
+    "on_reaction_clear_emoji", lambda x: x.message.guild
+)
 """Called when a message has a specific reaction removed from it.
 Similar to on_message_edit(), if the message is not found in the internal message cache,then this event will not be called. Consider using on_raw_reaction_clear_emoji() instead.
 
@@ -851,7 +891,9 @@ reaction: Reaction
     The reaction that got cleared.
 """
 
-on_raw_reaction_add: Event[discord.RawReactionActionEvent] = Event("on_raw_reaction_add")
+on_raw_reaction_add: Event[discord.RawReactionActionEvent] = Event(
+    "on_raw_reaction_add", lambda x: x.guild_id
+)
 """Called when a message has a reaction added. Unlike on_reaction_add(), this is called regardless of the state of the internal message cache.
 
 This requires Intents.reactions to be enabled.
@@ -863,7 +905,7 @@ payload: RawReactionActionEvent
 """
 
 on_raw_reaction_remove: Event[discord.RawReactionActionEvent] = Event(
-    "on_raw_reaction_remove"
+    "on_raw_reaction_remove", lambda x: x.guild_id
 )
 """Called when a message has a reaction removed. Unlike on_reaction_remove(), this is called regardless of the state of the internal message cache.
 
@@ -875,7 +917,9 @@ payload: RawReactionActionEvent
     The raw event payload data.
 """
 
-on_raw_reaction_clear: Event[discord.RawReactionClearEvent] = Event("on_raw_reaction_clear")
+on_raw_reaction_clear: Event[discord.RawReactionClearEvent] = Event(
+    "on_raw_reaction_clear", lambda x: x.guild_id
+)
 """Called when a message has all its reactions removed. Unlike on_reaction_clear(), this is called regardless of the state of the internal message cache.
 
 This requires Intents.reactions to be enabled.
@@ -887,7 +931,7 @@ payload: RawReactionClearEvent
 """
 
 on_raw_reaction_clear_emoji: Event[discord.RawReactionClearEmojiEvent] = Event(
-    "raw_reaction_clear_emoji"
+    "raw_reaction_clear_emoji", lambda x: x.guild_id
 )
 """Called when a message has a specific reaction removed from it. Unlike on_reaction_clear_emoji(), this is called regardless of the state of the internal message cache.
 
@@ -899,7 +943,7 @@ payload: RawReactionClearEmojiEvent
     The raw event payload data.
 """
 
-on_guild_role_create: Event[discord.Role] = Event("guild_role_create")
+on_guild_role_create: Event[discord.Role] = Event("guild_role_create", lambda x: x.guild)
 """Called when a Guild creates a new Role.
 
 To get the guild it belongs to, use Role.guild.
@@ -912,7 +956,7 @@ role: Role
     The role that was created.
 """
 
-on_guild_role_delete: Event[discord.Role] = Event("guild_role_delete")
+on_guild_role_delete: Event[discord.Role] = Event("guild_role_delete", lambda x: x.guild)
 """Called when a Guild deletes a Role.
 
 To get the guild it belongs to, use Role.guild.
@@ -925,7 +969,9 @@ role: Role
     The role that was deleted.
 """
 
-on_guild_role_update: Event[discord.Role, discord.Role] = Event("on_guild_role_update")
+on_guild_role_update: Event[discord.Role, discord.Role] = Event(
+    "on_guild_role_update", lambda x, _: x.guild
+)
 """Called when a Role is changed guild-wide.
 
 This requires Intents.guilds to be enabled.
@@ -939,7 +985,7 @@ after: Role
 """
 
 on_scheduled_event_create: Event[discord.ScheduledEvent] = Event(
-    "on_scheduled_event_create"
+    "on_scheduled_event_create", lambda x: x.guild
 )
 """Called when a ScheduledEvent is created.
 
@@ -952,7 +998,7 @@ event: ScheduledEvent
 """
 
 on_scheduled_event_delete: Event[discord.ScheduledEvent] = Event(
-    "on_scheduled_event_delete"
+    "on_scheduled_event_delete", lambda x: x.guild
 )
 """Called when a ScheduledEvent is deleted.
 
@@ -965,7 +1011,7 @@ event: ScheduledEvent
 """
 
 on_scheduled_event_update: Event[discord.ScheduledEvent, discord.ScheduledEvent] = Event(
-    "scheduled_event_update"
+    "scheduled_event_update", lambda x, _: x.guild
 )
 """Called when a ScheduledEvent is updated.
 
@@ -987,7 +1033,7 @@ after: ScheduledEvent
 """
 
 on_scheduled_event_user_add: Event[discord.ScheduledEvent, discord.User] = Event(
-    "scheduled_event_user_add"
+    "scheduled_event_user_add", lambda x, _: x.guild
 )
 """Called when a user is added to a ScheduledEvent.
 
@@ -1002,7 +1048,7 @@ user: User
 """
 
 on_scheduled_event_user_remove: Event[discord.ScheduledEvent, discord.User] = Event(
-    "scheduled_event_user_remove"
+    "scheduled_event_user_remove", lambda x, _: x.guild
 )
 """Called when a user is removed from a ScheduledEvent.
 
@@ -1016,7 +1062,9 @@ user: User
     The user that was removed.
 """
 
-on_stage_instance_create: Event[discord.StageInstance] = Event("on_stage_instance_create")
+on_stage_instance_create: Event[discord.StageInstance] = Event(
+    "on_stage_instance_create", lambda x: x.guild
+)
 """Called when a StageInstance is created for a StageChannel.
 
 Parameters
@@ -1025,7 +1073,9 @@ stage_instance: StageInstance
     The stage instance that was created.
 """
 
-on_stage_instance_delete: Event[discord.StageInstance] = Event("on_stage_instance_delete")
+on_stage_instance_delete: Event[discord.StageInstance] = Event(
+    "on_stage_instance_delete", lambda x: x.guild
+)
 """Called when a StageInstance is deleted for a StageChannel.
 
 Parameters
@@ -1035,7 +1085,7 @@ stage_instance: StageInstance
 """
 
 on_stage_instance_update: Event[discord.StageInstance, discord.StageInstance] = Event(
-    "stage_instance_update"
+    "stage_instance_update", lambda x, _: x.guild
 )
 """Called when a StageInstance is updated.
 
@@ -1051,7 +1101,7 @@ after: StageInstance
     The stage instance after the update.
 """
 
-on_thread_create: Event[discord.Thread] = Event("thread_create")
+on_thread_create: Event[discord.Thread] = Event("thread_create", lambda x: x.guild)
 """Called whenever a thread is created.
 
 Note that you can get the guild from Thread.guild.
@@ -1064,7 +1114,7 @@ thread: Thread
     The thread that was created.
 """
 
-on_thread_join: Event[discord.Thread] = Event("thread_join")
+on_thread_join: Event[discord.Thread] = Event("thread_join", lambda x: x.guild)
 """Called whenever a thread is joined.
 
 Note that you can get the guild from Thread.guild.
@@ -1077,7 +1127,9 @@ thread: Thread
     The thread that was joined.
 """
 
-on_thread_update: Event[discord.Thread, discord.Thread] = Event("on_thread_update")
+on_thread_update: Event[discord.Thread, discord.Thread] = Event(
+    "on_thread_update", lambda x, _: x.guild
+)
 """Called whenever a thread is updated.
 
 If the thread could not be found in the internal cache, this event will not be called.
@@ -1094,7 +1146,7 @@ after: Thread
     The updated thread's new info.
 """
 
-on_thread_remove: Event[discord.Thread] = Event("thread_remove")
+on_thread_remove: Event[discord.Thread] = Event("thread_remove", lambda x: x.guild)
 """Called whenever a thread is removed. This is different from a thread being deleted.
 
 Note that you can get the guild from Thread.guild.
@@ -1110,7 +1162,7 @@ thread: Thread
     The thread that was removed.
 """
 
-on_thread_delete: Event[discord.Thread] = Event("thread_delete")
+on_thread_delete: Event[discord.Thread] = Event("thread_delete", lambda x: x.guild)
 """Called whenever a thread is deleted. If the thread could not be found in the internal cache, this event will not be called.
 Threads will not be in the cache if they are archived.
 If you need this information, use on_raw_thread_delete() instead.
@@ -1125,7 +1177,9 @@ thread: Thread
     The thread that was deleted.
 """
 
-on_raw_thread_update: Event[discord.RawThreadUpdateEvent] = Event("on_raw_thread_update")
+on_raw_thread_update: Event[discord.RawThreadUpdateEvent] = Event(
+    "on_raw_thread_update", lambda x: x.guild_id
+)
 """Called whenever a thread is updated. Unlike on_thread_update(), this is called regardless of the thread being in the internal thread cache or not.
 
 This requires Intents.guilds to be enabled.
@@ -1136,7 +1190,9 @@ payload: RawThreadUpdateEvent
     The raw event payload data.
 """
 
-on_raw_thread_delete: Event[discord.RawThreadDeleteEvent] = Event("on_raw_thread_delete")
+on_raw_thread_delete: Event[discord.RawThreadDeleteEvent] = Event(
+    "on_raw_thread_delete", lambda x: x.guild_id
+)
 """Called whenever a thread is deleted. Unlike on_thread_delete(), this is called regardless of the thread being in the internal thread cache or not.
 
 This requires Intents.guilds to be enabled.
@@ -1147,7 +1203,9 @@ payload: RawThreadDeleteEvent
     The raw event payload data.
 """
 
-on_thread_member_join: Event[discord.ThreadMember] = Event("on_thread_member_join")
+on_thread_member_join: Event[discord.ThreadMember] = Event(
+    "on_thread_member_join", lambda x: x.thread.guild
+)
 """Called when a ThreadMember joins a Thread.
 
 You can get the thread a member belongs to by accessing ThreadMember.thread.
@@ -1160,7 +1218,9 @@ member: ThreadMember
     The member who joined.
 """
 
-on_thread_member_remove: Event[discord.ThreadMember] = Event("on_thread_member_remove")
+on_thread_member_remove: Event[discord.ThreadMember] = Event(
+    "on_thread_member_remove", lambda x: x.thread.guild
+)
 """Called when a ThreadMember leaves a Thread.
 
 You can get the thread a member belongs to by accessing ThreadMember.thread.
@@ -1174,7 +1234,7 @@ member: ThreadMember
 """
 
 on_raw_thread_member_remove: Event[discord.RawThreadMembersUpdate] = Event(
-    "on_raw_thread_member_remove"
+    "on_raw_thread_member_remove", lambda x: x.guild_id
 )
 """Called when a ThreadMember leaves a Thread. Unlike on_thread_member_remove(), this is called regardless of the member being in the internal thread's members cache or not.
 
@@ -1188,7 +1248,7 @@ payload: RawThreadMembersUpdate
 
 on_voice_state_update: Event[
     discord.Member, discord.VoiceState, discord.VoiceState
-] = Event("voice_state_update")
+] = Event("voice_state_update", lambda x, *_: x.guild)
 """Called when a Member changes their VoiceState.
 
 The following, but not limited to, examples illustrate when this event is called:

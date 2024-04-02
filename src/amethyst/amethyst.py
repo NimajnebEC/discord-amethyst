@@ -62,9 +62,15 @@ class Client(discord.Client):
         self._plugins: dict[Type[Plugin], Plugin] = {}
         self._tasks: list[Coro[Any]] | None = []
         self._widgets: list[BaseWidget] = []
-        self.guild: int | None = (
-            int(envnull.AMETHYST_GUILD) if envnull.AMETHYST_GUILD else None
-        )
+
+        self._guild = None
+        if envnull.AMETHYST_GUILD is not None:
+            self._guild = int(envnull.AMETHYST_GUILD)
+
+    @property
+    def guild(self) -> int | None:
+        """If present, the bot will ignore all events from guilds with a different id."""
+        return self._guild
 
     @property
     def tree(self) -> discord.app_commands.CommandTree:
@@ -259,6 +265,16 @@ class Client(discord.Client):
         else:
             _log.debug("Skipping tree synchronisation - already up to date.")
 
+    def guild_allowed(self, check: discord.Guild | int | None) -> bool:
+        if self.guild is None:
+            return True
+
+        if isinstance(check, discord.Guild):
+            return check.id == self.guild
+        if isinstance(check, int):
+            return check == self.guild
+        return False
+
     def run(
         self,
         *,
@@ -269,7 +285,7 @@ class Client(discord.Client):
         log_filters: dict[str, int] = {},
         plugin_modules: list[str] = _default_modules,
     ) -> None:
-        self.guild = guild or self.guild
+        self._guild = guild or self._guild
         lavender.setup(level=log_level, filter_config=log_filters)
         self.load_plugins(plugin_modules)
         return super().run(
@@ -288,8 +304,8 @@ class Client(discord.Client):
 
         if envnull.AMETHYST_AUTO_SYNC is not None:
             guild = None
-            if self.guild is not None:
-                guild = discord.Object(self.guild)
+            if self._guild is not None:
+                guild = discord.Object(self._guild)
                 self.tree.copy_global_to(guild=guild)
             await self.refresh_tree(guild)
 
@@ -371,22 +387,8 @@ class Plugin:
 class BaseWidget(dynamicpy.BaseWidget[CallbackT]):
     """The base class for all Amethyst widgets to inherit from."""
 
-    def bound(
-        self: BaseWidget[Callable[Concatenate[PluginSelf, P], T]], plugin: Plugin
-    ) -> Callable[P, T]:
-        """Return a bound copy of the callback function.
-
-        Parameters
-        ----------
-        plugin : `Plugin`
-            The `Plugin` to bind the function to.
-
-        Returns
-        -------
-        `Callable[P, T]`
-            The bound version of the callback function.
-        """
-        return lambda *args, **kwargs: self.callback(plugin, *args, **kwargs)  # type: ignore
+    def __init__(self, callback: CallbackT) -> None:
+        super().__init__(callback)
 
     def register(self, plugin: Plugin, client: Client) -> None:
         """Register the widget with the provided `Client`.
@@ -398,7 +400,7 @@ class BaseWidget(dynamicpy.BaseWidget[CallbackT]):
         client : `Client`
             The client to register the widget with.
         """
-        raise NotImplementedError(f"{type(self).__name__} must implement 'register'")
+        raise NotImplementedError(f"{self.type} must implement 'register'")
 
     @classproperty
     def type(cls) -> str:

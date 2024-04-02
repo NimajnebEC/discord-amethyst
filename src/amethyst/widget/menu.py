@@ -23,10 +23,11 @@ class ContextMenuWidget(BaseWidget[Callback[SubjectT]]):
         self._name = name
         self.nsfw = nsfw
 
-    def bound(
-        self, plugin: Plugin
+    def wrap(
+        self,
+        plugin: Plugin,
     ) -> Callable[[Interaction[Client], SubjectT], Coroutine[Any, Any, None]]:
-        async def bound(interaction: Interaction, subject) -> None:
+        async def wrapped(interaction: Interaction, subject) -> None:
             await self.callback(plugin, interaction, subject)
 
         # Copy subject type annotation
@@ -38,19 +39,20 @@ class ContextMenuWidget(BaseWidget[Callback[SubjectT]]):
         if subject.annotation is subject.empty:
             raise ValueError("Third parameter of context menus must be explicitly typed.")
 
-        bound.__annotations__["subject"] = subject.annotation
+        wrapped.__annotations__["subject"] = subject.annotation
 
-        return bound
+        return wrapped
 
     def register(self, plugin: Plugin, client: Client) -> None:
         _log.debug("Registering context menu '%s'", self.name)
 
         menu = app_commands.ContextMenu(
             name=self._name or self.callback.__name__.title(),
-            callback=self.bound(plugin),
+            callback=self.wrap(plugin),
             nsfw=self.nsfw,
         )
 
+        menu.add_check(lambda i: plugin.client.guild_allowed(i.guild))
         client.tree.add_command(menu)
 
 

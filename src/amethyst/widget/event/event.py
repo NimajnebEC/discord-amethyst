@@ -11,6 +11,8 @@ from typing import (
     TypeVar,
 )
 
+import discord
+
 from amethyst.amethyst import BaseWidget, Client, Plugin, PluginSelf
 
 __all__ = ("Event", "EventWidget", "event")
@@ -35,13 +37,21 @@ class Event(Generic[P]):
     ```
     """
 
-    def __init__(self, name: str) -> None:
+    def __init__(
+        self,
+        name: str,
+        guild: Callable[P, discord.Guild | int | None] | None = None,
+    ) -> None:
+        self._guild = guild or (lambda *_: None)
         self._name = name
 
     @property
     def name(self) -> str:
         """The name of the event."""
         return self._name
+
+    def get_guild(self, *args) -> discord.Guild | int | None:
+        return self._guild(*args)  # type: ignore
 
 
 class EventWidget(BaseWidget[Callback[P]]):
@@ -70,7 +80,7 @@ class EventWidget(BaseWidget[Callback[P]]):
             if plugin is None:
                 client._setup_hooks.append(self.callback)
             else:
-                client._setup_hooks.append(self.bound(plugin))
+                client._setup_hooks.append(lambda: self.callback(plugin))  # type: ignore
             return
 
         async def wrapper(*args) -> None:
@@ -80,10 +90,16 @@ class EventWidget(BaseWidget[Callback[P]]):
                 _log.error("Error handling '%s': ", self.name, exc_info=True)
 
         def handler(*args) -> bool:
-            if plugin is not None:  # To support anonymous events using Client.event
-                args = (plugin, *args)
+            guild = self.event.get_guild(*args)
+            if guild is None or client.guild_allowed(guild):
+                if plugin is not None:  # To support anonymous events using Client.event
+                    args = (plugin, *args)
 
-            client.create_task(wrapper(*args))
+                client.create_task(wrapper(*args))
+            else:
+                _log.debug(
+                    f"Skipping invokation of event '{self.name}' as guild '{guild}' is not allowed."
+                )
             return False
 
         client.create_task(client.wait_for(self.event, check=handler))  # type: ignore
