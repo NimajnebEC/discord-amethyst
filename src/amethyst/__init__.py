@@ -1,21 +1,25 @@
-from amethyst.client import AmethystClient
-from amethyst.widget import (
-    AmethystEvent,
-    AmethystPlugin,
-    command,
-    describe,
-    event,
-    events,
-    schedule,
-)
+from amethyst.amethyst import BaseWidget, Client, Plugin, WidgetPlugin
+from amethyst.widget.command import CommandWidget, command
+from amethyst.widget.event import Event, EventWidget, event
+from amethyst.widget.event.library import *  # noqa: F403
+from amethyst.widget.menu import ContextMenuWidget, context_menu
+from amethyst.widget.schedule import ScheduleWidget, schedule
+
+__version__ = "${pyproject.tool.poetry.version}"
+__author__ = "${pyproject.tool.poetry.authors.0}"
 
 __all__ = (
-    "AmethystClient",
+    "CommandWidget",
+    "EventWidget",
+    "ContextMenuWidget",
+    "ScheduleWidget",
+    "WidgetPlugin",
+    "BaseWidget",
     "command",
-    "describe",
-    "AmethystEvent",
-    "AmethystPlugin",
+    "Client",
+    "Plugin",
+    "Event",
     "event",
-    "events",
     "schedule",
+    "context_menu",
 )

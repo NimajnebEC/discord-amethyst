@@ -1,50 +1,49 @@
+from __future__ import annotations
+
+import asyncio
+import itertools
+import logging
 from datetime import datetime
-from typing import Any, Callable, Coroutine, TypeVar
+from typing import Any, Callable, Coroutine, Iterator
 
 from croniter import CroniterBadCronError, croniter
 
-from amethyst.widget.abc import AmethystPlugin, Callback, CallbackWidget
+from amethyst.amethyst import BaseWidget, Client, Plugin, PluginSelf
 
-__all__ = ("AmethystSchedule", "schedule")
+Callback = Callable[[PluginSelf], Coroutine[Any, Any, None]]
 
-PluginT = TypeVar("PluginT", bound=AmethystPlugin)
+_min_step = 30
 
-ScheduleCallback = Callback[PluginT, [], Coroutine[Any, Any, None]]
+_log = logging.getLogger(__name__)
 
 
-class AmethystSchedule(CallbackWidget[PluginT, [], Coroutine[Any, Any, None]]):
+async def wait_until(when: datetime):
+    """Wait until the specified datetime by waiting exponentially smaller intervals.
+
+    This protects the function from un-expected clock changes.
+
+    Parameters
+    ----------
+    when : datetime
+        The datetime to wait until.
+    """
+    while True:
+        delay = (when - datetime.now()).total_seconds()
+        if delay <= _min_step:
+            break
+        await asyncio.sleep(delay / 2)
+    await asyncio.sleep(delay)
+
+
+class ScheduleWidget(BaseWidget[Callback]):
     """Represents an asynchronous function that should be called on a schedule.
 
     These are not usually created manually, instead they are created using the `amethyst.schedule` decorator.
     """
 
-    def __init__(
-        self,
-        cron: str,
-        callback: ScheduleCallback[PluginT],
-        name: str | None = None,
-    ) -> None:
-        """Represents an asynchronous function that should be called on a schedule.
-
-        These are not usually created manually, instead they are created using the `amethyst.schedule` decorator.
-
-        Parameters
-        ----------
-        cron : `str`
-            The cron expression to run this schedule on.
-        callback : `Callable[[PluginT], T] | Callable[[], Coroutine[Any, Any, T]]`
-            The function that should be invoked when this schedule is run.
-        name : `str`, optional
-            The name of this schedule widget, by default None
-
-        Raises
-        ------
-        TypeError
-            Raised when the provided cron expression is invalid.
-        """
-        super().__init__(callback, name)
-        # validate cron expression
-        try:
+    def __init__(self, callback: Callback, cron: str) -> None:
+        super().__init__(callback)
+        try:  # validate cron expression
             croniter(cron)
         except CroniterBadCronError as e:
             raise TypeError(f"Bad Cron Expression '{cron}'") from e
@@ -55,28 +54,38 @@ class AmethystSchedule(CallbackWidget[PluginT, [], Coroutine[Any, Any, None]]):
         """The cron expression for this schedule."""
         return self._cron
 
-    def next_occurrence(self) -> datetime:
-        """Gets the next occurrence of this schedule.
+    def get_iter(self) -> Iterator[datetime]:
+        """Gets an iterable of datetimes this schedule should be invoked at starting from now.
 
         Returns
         -------
-        `datetime`
-            The `datetime` representing when this schedule should next be called.
+        `Iterator[datetime]`
+            And iterable of when this schedule should be invoked.
         """
         iter = croniter(self.cron, datetime.now())
-        return iter.get_next(datetime)
+        return (iter.get_next(datetime) for _ in itertools.count())
+
+    def register(self, plugin: Plugin, client: Client) -> None:
+        _log.debug("Registering schedule '%s' with '%s'", self.name, self.cron)
+
+        async def loop():
+            iter = self.get_iter()
+            while not client.is_closed():
+                await wait_until(next(iter))
+                if client.is_ready():
+                    _log.debug("Invoking schedule '%s'", self.name)
+                    client.create_task(self.callback(plugin))
+                else:
+                    _log.debug("Skipping schedule '%s' as client is not ready", self.name)
+
+        client.create_task(loop())
 
 
-def schedule(cron: str) -> Callable[[ScheduleCallback[PluginT]], AmethystSchedule[PluginT]]:
-    """Decorator to designate a regular function to be called on a schedule.
+schedule = ScheduleWidget.decorate
+"""Decorator to designate a regular function to be called on a schedule.
 
     Parameters
     ----------
     cron: `str`
         The cron expression to run the schedule on.
     """
-
-    def decorator(func: ScheduleCallback[PluginT]) -> AmethystSchedule[PluginT]:
-        return AmethystSchedule(cron, func)
-
-    return decorator

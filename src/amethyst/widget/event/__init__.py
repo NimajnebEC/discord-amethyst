@@ -1,15 +1,13 @@
-from amethyst.widget.event import library as events
-from amethyst.widget.event.handler import (
-    AmethystEvent,
-    AmethystEventHandler,
-    DiscordPyEvent,
+from amethyst.widget.event import library
+from amethyst.widget.event.event import (
+    Event,
+    EventWidget,
     event,
 )
 
 __all__ = (
-    "events",
-    "AmethystEvent",
-    "AmethystEventHandler",
-    "DiscordPyEvent",
+    "library",
+    "Event",
+    "EventWidget",
     "event",
 )

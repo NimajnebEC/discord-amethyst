@@ -1,8 +1,9 @@
 __all__ = (
-    "AmethystError",
-    "ModuleLocateError",
+    "PluginDependencyError",
+    "DuplicatePluginError",
     "RegisterPluginError",
-    "WidgetAlreadyRegisteredError",
+    "ModuleLocateError",
+    "AmethystError",
 )
 
 
@@ -15,8 +16,12 @@ class ModuleLocateError(AmethystError):
 
 
 class RegisterPluginError(AmethystError):
-    """Exception raised when there is an error registering a plugin."""
+    """Exceptions raised when registering a plugin fails."""
 
 
-class WidgetAlreadyRegisteredError(AmethystError):
-    """Exception raised when attempting to register a widget that has already been registered to this client."""
+class DuplicatePluginError(RegisterPluginError):
+    """Exception raised when attempting to register a plugin that is already registered."""
+
+
+class PluginDependencyError(RegisterPluginError):
+    """Exception raised when binding dependencies fails."""
