@@ -44,7 +44,74 @@ _log = logging.getLogger(__name__)
 
 
 class Client(discord.Client):
-    """Represents a connection to Discord. This class extends discord.Client and is the primary home of amethyt's additions."""
+    """Represents a connection to Discord. This class extends discord.Client and is the primary home of amethyt's additions.
+
+    Parameters
+    ----------
+    intents: `Intents`
+        The intents that you want to enable for the session. This is a way of
+        disabling and enabling certain gateway events from triggering and being sent.
+    search_modules : `list[str]`, optional
+        The modules to search for widgets and plugins in
+    max_messages: `int`, optional
+        The maximum number of messages to store in the internal message cache.
+        This defaults to ``1000``. Passing in ``None`` disables the message cache.
+    proxy: `str`, optional
+        Proxy URL.
+    proxy_auth: `aiohttp.BasicAuth`, optional
+        An object that represents proxy HTTP Basic Authorization.
+    shard_id: `int`, optional
+        Integer starting at ``0`` and less than `.shard_count`.
+    shard_count: `int`, optional
+        The total number of shards.
+    application_id: `int`
+        The client's application ID.
+    member_cache_flags: `MemberCacheFlags`
+        Allows for finer control over how the library caches members.
+        If not given, defaults to cache as much as possible with the
+        currently selected intents.
+    chunk_guilds_at_startup: `bool`
+        Indicates if `.on_ready` should be delayed to chunk all guilds
+        at start-up if necessary. This operation is incredibly slow for large
+        amounts of guilds. The default is ``True`` if `Intents.members`
+        is ``True``.
+    status: `.Status`, optional
+        A status to start your presence with upon logging on to Discord.
+    activity: `.BaseActivity`, optional
+        An activity to start your presence with upon logging on to Discord.
+    allowed_mentions: `AllowedMentions`, optional
+        Control how the client handles mentions by default on every message sent.
+    heartbeat_timeout: `float`
+        The maximum numbers of seconds before timing out and restarting the
+        WebSocket in the case of not receiving a HEARTBEAT_ACK. Useful if
+        processing the initial packets take too long to the point of disconnecting
+        you. The default timeout is 60 seconds.
+    guild_ready_timeout: `float`
+        The maximum number of seconds to wait for the GUILD_CREATE stream to end before
+        preparing the member cache and firing READY. The default timeout is 2 seconds.
+    assume_unsync_clock: `bool`
+        Whether to assume the system clock is unsynced. This applies to the ratelimit handling
+        code. If this is set to ``True``, the default, then the library uses the time to reset
+        a rate limit bucket given by Discord. If this is ``False`` then your system clock is
+        used to calculate how long to sleep for. If this is set to ``False`` it is recommended to
+        sync your system clock to Google's NTP server.
+    enable_debug_events: `bool`
+        Whether to enable events that are useful only for debugging gateway related information.
+
+        Right now this involves :func:`on_socket_raw_receive` and :func:`on_socket_raw_send`. If
+        this is ``False`` then those events will not be dispatched (due to performance considerations).
+        To enable these events, this must be set to ``True``. Defaults to ``False``.
+    http_trace: `aiohttp.TraceConfig`
+        The trace configuration to use for tracking HTTP requests the library does using ``aiohttp``.
+        This allows you to check requests the library is using. For more information, check the
+        [aiohttp documentation](https://docs.aiohttp.org/en/stable/client_advanced.html#client-tracing).
+    max_ratelimit_timeout: `float`, optional
+        The maximum number of seconds to wait when a non-global rate limit is encountered.
+        If a request requires sleeping for more than the seconds passed in, then
+        :exc:`~discord.RateLimited` will be raised. By default, there is no timeout limit.
+        In order to prevent misuse and unnecessary bans, the minimum value this can be
+        set to is ``30.0`` seconds.
+    """
 
     ##region Public Methods
 
@@ -56,6 +123,7 @@ class Client(discord.Client):
         super().__init__(intents=intents, **options)
         self._instantiating_package = self._get_instantiating_package()
         self._setup_hooks: list[Callable[..., Coro[None]]] = []
+        self._auto_sync = envnull.AMETHYST_AUTO_SYNC is not None
         self._tree = discord.app_commands.CommandTree(self)
         self._dependencies = dynamicpy.DependencyLibrary()
         self._module_loader = self._build_module_loader()
@@ -68,7 +136,7 @@ class Client(discord.Client):
             self._guild = int(envnull.AMETHYST_GUILD)
 
     @property
-    def guild(self) -> int | None:
+    def allowed_guild(self) -> int | None:
         """If present, the bot will ignore all events from guilds with a different id."""
         return self._guild
 
@@ -199,11 +267,49 @@ class Client(discord.Client):
         check: Callable[P, bool] | None = None,
         timeout: float | None = None,
     ) -> None:
+        """
+        Waits for a WebSocket event to be dispatched.
+
+        This could be used to wait for a user to reply to a message,
+        or to react to a message, or to edit a message in a self-contained
+        way.
+
+        The ``timeout`` parameter is passed onto :func:`asyncio.wait_for`. By default,
+        it does not timeout. Note that this does propagate the
+        :exc:`asyncio.TimeoutError` for you in case of timeout and is provided for
+        ease of use.
+
+        In case the event returns multiple arguments, a :class:`tuple` containing those
+        arguments is returned instead. Please check the
+        documentation for a list of events and their
+        parameters.
+
+        This function returns the **first event that meets the requirements**.
+
+
+        Parameters
+        ----------
+        event : `Event[P]`
+            The event to wait for.
+        check : `Callable[P, bool] | None`, optional
+            A predicate to check what to wait for. The arguments must meet the
+            parameters of the event being waited for.
+        timeout : `float | None`, optional
+            The number of seconds to wait before timing out and raising `asyncio.TimeoutError`.
+        """
         await super().wait_for(event.name, check=check, timeout=timeout)
 
     def event(
         self, event: "Event[P]"
     ) -> Callable[[Callable[P, Coro[None]]], Callable[P, Coro[None]]]:
+        """A decorator that registers an event to listen to.
+
+        Parameters
+        ----------
+        event : `Event`
+            The event to listen to.
+        """
+
         def decorator(func: Callable[P, Coro[None]]) -> Callable[P, Coro[None]]:
             from amethyst.widget.event import EventWidget
 
@@ -213,12 +319,31 @@ class Client(discord.Client):
         return decorator
 
     def create_task(self, task: Coro[Any]) -> None:
+        """Creates an asynchronous task to be started once the event loop is set-up.
+
+        Parameters
+        ----------
+        task : `Coro[Any]`
+            The coroutine to start.
+        """
         if self._tasks is None:
             self.loop.create_task(task)
         else:
             self._tasks.append(task)
 
     async def tree_changed(self, guild: discord.abc.Snowflake | None = None) -> bool:
+        """Checks if the local application command tree is different from the remote.
+
+        Parameters
+        ----------
+        guild : `discord.abc.Snowflake | None`, optional
+            The guild to check the commands against. If not passed then global commands are checked instead.
+
+        Returns
+        -------
+        `bool`
+            `True` if the application commands do not match.
+        """
         remotes = await self.tree.fetch_commands(guild=guild)
         locals = self.tree.get_commands(guild=guild)
 
@@ -259,6 +384,13 @@ class Client(discord.Client):
         return False
 
     async def refresh_tree(self, guild: discord.abc.Snowflake | None = None) -> None:
+        """Synchronises the application command tree if it has changed.
+
+        Parameters
+        ----------
+        guild : `discord.abc.Snowflake | None`, optional
+            The guild to refresh the commands to. If not passed then global commands are refreshed instead.
+        """
         if await self.tree_changed(guild):
             _log.info("Synchronising application tree...")
             await self.tree.sync(guild=guild)
@@ -266,30 +398,70 @@ class Client(discord.Client):
             _log.debug("Skipping tree synchronisation - already up to date.")
 
     def guild_allowed(self, check: discord.Guild | int | None) -> bool:
-        if self.guild is None:
+        """Checks if the specified guild is allowed based on the `AMETHYST_GUILD` environment variable.
+
+        Parameters
+        ----------
+        check : `discord.Guild | int | None`
+            The guild to check.
+
+        Returns
+        -------
+        bool
+            `True` if guild is allowed.
+        """
+        if self.allowed_guild is None:
             return True
 
         if isinstance(check, discord.Guild):
-            return check.id == self.guild
+            return check.id == self.allowed_guild
         if isinstance(check, int):
-            return check == self.guild
+            return check == self.allowed_guild
         return False
 
     def run(
         self,
         *,
         reconnect: bool = True,
+        guild: int | None = -1,
         token: str | None = None,
-        guild: int | None = None,
         log_level: int = logging.INFO,
+        auto_sync: bool | None = None,
         log_filters: dict[str, int] = {},
         plugin_modules: list[str] = _default_modules,
     ) -> None:
-        self._guild = guild or self._guild
+        """A blocking call that abstracts away the event loop
+        initialisation from you.
+
+        This function also sets up [Lavender Logging](https://github.com/NimajnebEC/lavender-logging).
+
+        Parameters
+        ----------
+        token : `str | None`, optional
+            The authentication token. If not specified it will be taken from the `AMETHYST_TOKEN` environment variable.
+        reconnect : `bool`, optional
+           If we should attempt reconnecting, either due to internet failure or a specific failure on Discord's part. Certain
+           disconnects that lead to bad state will not be handled (such as invalid sharding payloads or bad tokens).
+        guild : `int | None`, optional
+            Overrides the `AMETHYST_GUILD` environment variable. If not `None` then the bot will only handle events from the specified guild.
+        guild : `bool | None`, optional
+            Overrides the `AMETHYST_AUTO_SYNC` environment variable. If `True` then the application command tree will be refreshed automatically.
+        log_level : `int`, optional
+            The default log level for Lavender's logger.
+        log_filters : `dict[str, int]`, optional
+            Initial logging filter patterns, by default no specific filters are specified.
+        plugin_modules : `list[str]`, optional
+            A list of modules to recursively search of plugins.
+        """
+        if guild != -1:
+            self._guild = guild
+        if auto_sync is not None:
+            self._auto_sync = auto_sync
+
         lavender.setup(level=log_level, filter_config=log_filters)
         self.load_plugins(plugin_modules)
         return super().run(
-            token or environ.AMETHYST_BOT_TOKEN,
+            token or environ.AMETHYST_TOKEN,
             reconnect=reconnect,
             log_handler=None,
         )
@@ -302,7 +474,7 @@ class Client(discord.Client):
         # ensure that all hooks are run before continuing
         await asyncio.gather(*(h() for h in self._setup_hooks))
 
-        if envnull.AMETHYST_AUTO_SYNC is not None:
+        if self._auto_sync:
             guild = None
             if self._guild is not None:
                 guild = discord.Object(self._guild)

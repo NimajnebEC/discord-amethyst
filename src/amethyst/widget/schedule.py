@@ -18,6 +18,15 @@ _log = logging.getLogger(__name__)
 
 
 async def wait_until(when: datetime):
+    """Wait until the specified datetime by waiting exponentially smaller intervals.
+
+    This protects the function from un-expected clock changes.
+
+    Parameters
+    ----------
+    when : datetime
+        The datetime to wait until.
+    """
     while True:
         delay = (when - datetime.now()).total_seconds()
         if delay <= _min_step:

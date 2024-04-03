@@ -13,6 +13,11 @@ _log = logging.getLogger(__name__)
 
 
 class ContextMenuWidget(BaseWidget[Callback[SubjectT]]):
+    """Represents a context menu.
+
+    These are not usually created manually, instead they are created using the `amethyst.context_menu` decorator.
+    """
+
     def __init__(
         self,
         callback: Callback,
