@@ -14,7 +14,7 @@ environ-import = "^0.1.0"
 discord-py = "^2.3.2"
 dynamicpy = "^1.2.2"
 croniter = "^1.4.1"
-python = "~3.11"
+python = "^3.11"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.3.1"
